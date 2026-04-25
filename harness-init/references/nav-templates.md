@@ -61,9 +61,10 @@ Before medium/large work:
 1. create or update execution plan:
    - project-scoped work: `<project>/.harness/docs/exec-plans/active/`
    - cross-project/repository work: `.harness/docs/exec-plans/active/`
-2. validate architecture boundaries
-3. run harness checks
-4. update feedback/entropy docs when needed
+2. fill the plan's Context Package: required docs, relevant patterns, affected surfaces, validation chain, learning backfill
+3. validate architecture boundaries
+4. run harness checks
+5. update feedback/entropy docs when needed
 
 ## Shared Constraints
 
@@ -202,9 +203,10 @@ Canonical scripts:
 
 Before medium/large work:
 1. create/update execution plan
-2. run boundary checks
-3. run harness validation
-4. update feedback loop when repeated failures happen
+2. fill the plan's Context Package
+3. run boundary checks
+4. run harness validation
+5. update feedback loop when repeated failures happen
 
 ## Commands
 

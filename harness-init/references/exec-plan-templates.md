@@ -66,6 +66,20 @@ Risk: low | medium | high
 
 ## Affected Areas
 
+## Context Package
+
+- Required Docs:
+  - <navigation file>
+  - <harness docs>
+- Relevant Patterns:
+  - <similar implementation/test/plan/ADR>
+- Affected Surfaces:
+  - <modules/boundaries>
+- Validation Chain:
+  - <lint/type-check/test/build/harness commands>
+- Learning Backfill:
+  - <target harness doc or none>
+
 ## Dependencies
 
 ## Risks
@@ -84,6 +98,18 @@ Risk: low | medium | high
 
 ## Post-completion Notes
 ```
+
+---
+
+## Context Package Rule
+
+Context Package 是 execution plan 内的轻量索引，不是新的任务系统。
+
+规则：
+- 只引用路径，不复制文档正文。
+- 记录本任务需要读取、对照、验证和可能回写的最小上下文。
+- scope 变化时先更新 Context Package。
+- 若没有可复用学习，`Learning Backfill` 写 `none`。
 
 ---
 

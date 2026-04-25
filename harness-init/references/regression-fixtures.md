@@ -28,6 +28,7 @@ fixtures/
 ## Required Assertions
 
 每个 fixture 至少验证：
+- `SKILL.md` 通过 skill 校验，且正文保持精简（建议不超过 500 行）
 - root navigation file 不污染
 - project navigation file 生成正确
 - canonical docs 生成为事实源

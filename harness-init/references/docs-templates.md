@@ -304,6 +304,19 @@ If the same class of failure appears twice, harden it into at least one:
 
 ## Required Fields
 
+### Learning Backfill Rule
+
+Before closing a task, decide whether a stable lesson should be written back to harness docs. Write only reusable, auditable facts.
+
+Targets:
+- new boundary rule: `.harness/docs/architecture-boundaries.md`
+- new engineering constraint: `.harness/docs/constraints.md`
+- new validation requirement: `.harness/docs/testing.md` or harness scripts
+- repeated failure: `.harness/docs/feedback-loops.md`
+- stale/duplicate/obsolete governance: `.harness/docs/entropy-gc.md`
+
+If there is nothing to backfill, report `Learning Backfill: none`.
+
 ### Failure Pattern
 ### First Occurrence
 ### Second Occurrence
@@ -352,6 +365,8 @@ All medium/large tasks must have an execution plan here before implementation.
 In multi-project repositories:
 - root `.harness/docs/exec-plans/active/` is for cross-project/repository plans
 - project-level plans belong to `<project>/.harness/docs/exec-plans/active/`
+
+Each execution plan should include a lightweight Context Package that lists required docs, relevant patterns, affected surfaces, validation chain, and learning backfill target.
 ```
 
 ## exec-plans/completed/README.md
