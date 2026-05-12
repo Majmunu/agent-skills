@@ -6,7 +6,7 @@
 
 ## First-class Plan Rule
 
-以下改动必须先创建 execution plan（`.harness/docs/exec-plans/active/*.md`）再实施：
+以下改动必须先创建 execution plan（`docs/exec-plans/active/*.md`）再实施：
 - cross-module changes
 - cross-project changes
 - public API changes
@@ -24,14 +24,14 @@
 ## Plan Scope Policy
 
 - `single-project` / `nested-project`：
-  - use `.harness/docs/exec-plans/*`
+  - use `docs/exec-plans/*`
 - `multi-project`：
-  - root `.harness/docs/exec-plans/*` only for cross-project/repository-level plans
-  - `<project>/.harness/docs/exec-plans/*` for project-scoped plans
+  - root `docs/exec-plans/*` only for cross-project/repository-level plans
+  - `<project>/docs/exec-plans/*` for project-scoped plans
 
 plan gate must accept:
-- `.harness/docs/exec-plans/active/<plan>.md`
-- `<project>/.harness/docs/exec-plans/active/<plan>.md`
+- `docs/exec-plans/active/<plan>.md`
+- `<project>/docs/exec-plans/active/<plan>.md`
 
 ---
 
@@ -43,9 +43,26 @@ plan gate must accept:
 - `active -> superseded`
 
 规则：
-- `active` 计划放在 `.harness/docs/exec-plans/active/`
-- `completed` 计划移到 `.harness/docs/exec-plans/completed/`
+- `active` 计划放在 `docs/exec-plans/active/`
+- `completed` 计划移到 `docs/exec-plans/completed/`
 - `blocked/superseded` 计划必须注明原因与后续处理
+
+---
+
+## Fixed Record Tags Contract
+
+Every execution plan and stage summary must include:
+
+- `[REQ]`
+- `[RULE]`
+- `[EVIDENCE]`
+- `[RISK]`
+- `[VERIFY]`
+- `[GATE]`
+
+Minimum requirement:
+- each phase update includes all six tags at least once
+- skipped checks are explicit (`[VERIFY] skipped - reason: ...`)
 
 ---
 
@@ -60,25 +77,23 @@ Created: <YYYY-MM-DD>
 Scope: <paths/modules>
 Risk: low | medium | high
 
+[REQ]
+
+[RULE]
+
+[EVIDENCE]
+
+[RISK]
+
+[VERIFY]
+
+[GATE]
+
 ## Goal
 
 ## Non-goals
 
 ## Affected Areas
-
-## Context Package
-
-- Required Docs:
-  - <navigation file>
-  - <harness docs>
-- Relevant Patterns:
-  - <similar implementation/test/plan/ADR>
-- Affected Surfaces:
-  - <modules/boundaries>
-- Validation Chain:
-  - <lint/type-check/test/build/harness commands>
-- Learning Backfill:
-  - <target harness doc or none>
 
 ## Dependencies
 
@@ -101,32 +116,20 @@ Risk: low | medium | high
 
 ---
 
-## Context Package Rule
-
-Context Package 是 execution plan 内的轻量索引，不是新的任务系统。
-
-规则：
-- 只引用路径，不复制文档正文。
-- 记录本任务需要读取、对照、验证和可能回写的最小上下文。
-- scope 变化时先更新 Context Package。
-- 若没有可复用学习，`Learning Backfill` 写 `none`。
-
----
-
 ## Plan Gate Script Contract
 
-canonical 脚本：`.harness/scripts/check-plan-required.sh`
+canonical 脚本：`scripts/harness/check-plan-required.sh`
 
 门禁必须同时验证：
-1. PR 描述包含 plan 路径（支持 root 与 project-scoped `.harness/docs/exec-plans/*`）
+1. PR 描述包含 plan 路径（支持 root 与 project-scoped `docs/exec-plans/*`）
 2. 路径对应文件存在
 3. 计划文件状态合法（默认仅 `active|completed`，可配置扩展）
 
 额外规则：
 - 若计划路径在 `active/` 或 `completed/`，文件前 60 行必须包含 `Status:` 字段。
 - multi-project 下：
-  - 单项目作用域变更优先要求 `<project>/.harness/docs/exec-plans/*`
-  - 跨项目/仓库级变更要求 `.harness/docs/exec-plans/*`
+  - 单项目作用域变更优先要求 `<project>/docs/exec-plans/*`
+  - 跨项目/仓库级变更要求 `docs/exec-plans/*`
 - 非 PR 事件自动跳过门禁。
 
 ---

@@ -1,0 +1,21 @@
+version: 1
+environment:
+  os: windows
+  shell: powershell
+  bash_available: false
+  pwsh_version: "7.4"
+runtime:
+  dev:
+    command: "npm run dev"
+    url: "http://localhost:3000"
+    health_check: "Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing"
+  checks:
+    lint: "npm run lint"
+    test: "npm test"
+    typecheck: "npx tsc --noEmit"
+    build: "npm run build"
+  logs:
+    local_path: "logs\\"
+  ui:
+    provider: "not-configured"
+    base_url: "TODO: 待补充"

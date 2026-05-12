@@ -6,7 +6,7 @@
 
 ## Required Document
 
-canonical 文件：`.harness/docs/ci-governance.md`
+canonical 文件：`docs/ci-governance.md`
 
 ---
 
@@ -92,7 +92,7 @@ enforced 检查临时降级仅允许在以下条件满足时：
 
 ## ADR Exception Contract
 
-例外路径：`.harness/docs/decisions/ADR-exceptions/*.md`
+例外路径：`docs/decisions/ADR-exceptions/*.md`
 
 每个例外必须包含：
 - `owner`
@@ -159,9 +159,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - run: bash .harness/scripts/check-boundaries.sh
-      - run: bash .harness/scripts/check-naming.sh
-      - run: bash .harness/scripts/check-file-size.sh
+      - run: bash scripts/harness/check-boundaries.sh
+      - run: bash scripts/harness/check-naming.sh
+      - run: bash scripts/harness/check-file-size.sh
 
   critical-gates:
     runs-on: ubuntu-latest
@@ -185,7 +185,7 @@ jobs:
           BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'origin/main' }}
           HEAD_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'HEAD' }}
           PR_LABELS: ${{ github.event_name == 'pull_request' && join(github.event.pull_request.labels.*.name, ',') || '' }}
-        run: bash .harness/scripts/check-critical.sh
+        run: bash scripts/harness/check-critical.sh
 
   enforced-validate:
     if: ${{ vars.CI_TRACK == 'enforced' }}
@@ -198,7 +198,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - run: bash .harness/scripts/check-all.sh
+      - run: bash scripts/harness/check-all.sh
 ```
 
 GitLab CI:
@@ -209,8 +209,8 @@ bootstrap_observe:
     - if: '$CI_TRACK == "bootstrap"'
   allow_failure: true
   script:
-    - HARNESS_TRACK=bootstrap HARNESS_STRICT_MODE=false bash .harness/scripts/check-boundaries.sh
-    - HARNESS_TRACK=bootstrap HARNESS_STRICT_MODE=false bash .harness/scripts/check-naming.sh
+    - HARNESS_TRACK=bootstrap HARNESS_STRICT_MODE=false bash scripts/harness/check-boundaries.sh
+    - HARNESS_TRACK=bootstrap HARNESS_STRICT_MODE=false bash scripts/harness/check-naming.sh
 
 critical_gates:
   allow_failure: false
@@ -218,12 +218,12 @@ critical_gates:
     - mkdir -p .harness
     - printf "%s" "${CI_MERGE_REQUEST_DESCRIPTION:-}" > .harness/pr-body.txt
     - EVENT_NAME="push"; if [ "${CI_PIPELINE_SOURCE:-}" = "merge_request_event" ]; then EVENT_NAME="pull_request"; fi
-    - GITHUB_EVENT_NAME="${EVENT_NAME}" PR_BODY_FILE=".harness/pr-body.txt" PR_LABELS="${CI_MERGE_REQUEST_LABELS:-}" BASE_REF="${CI_MERGE_REQUEST_DIFF_BASE_SHA:-origin/main}" HEAD_REF="${CI_COMMIT_SHA:-HEAD}" HARNESS_TRACK=bootstrap bash .harness/scripts/check-critical.sh
+    - GITHUB_EVENT_NAME="${EVENT_NAME}" PR_BODY_FILE=".harness/pr-body.txt" PR_LABELS="${CI_MERGE_REQUEST_LABELS:-}" BASE_REF="${CI_MERGE_REQUEST_DIFF_BASE_SHA:-origin/main}" HEAD_REF="${CI_COMMIT_SHA:-HEAD}" HARNESS_TRACK=bootstrap bash scripts/harness/check-critical.sh
 
 enforced_validate:
   rules:
     - if: '$CI_TRACK == "enforced"'
   allow_failure: false
   script:
-    - HARNESS_TRACK=enforced HARNESS_STRICT_MODE=true bash .harness/scripts/check-all.sh
+    - HARNESS_TRACK=enforced HARNESS_STRICT_MODE=true bash scripts/harness/check-all.sh
 ```

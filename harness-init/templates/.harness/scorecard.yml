@@ -1,0 +1,155 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+# Scope: root
+#
+# Quality Scorecard Configuration
+# Defines the 7-dimension scoring system for project harness quality assessment.
+# Used by: scripts/harness/score-quality.sh
+# Docs: references/scorecard-templates.md
+
+version: 1
+
+# --- Thresholds ---
+# Minimum scores required for mode transitions and autonomy levels.
+thresholds:
+  bootstrap_min: 60       # Minimum score to remain in bootstrap mode
+  enforced_min: 80        # Minimum score to enter enforced mode
+  autonomy_l3_min: 85     # Minimum score for L3 autonomy (supervised autonomous)
+  autonomy_l4_min: 92     # Minimum score for L4 autonomy (full autonomous)
+
+# --- Dimension Weights ---
+# Total must equal 100. Each dimension contributes its weight as max possible points.
+weights:
+  context_readability: 20
+  plan_discipline: 15
+  architecture_enforcement: 20
+  test_confidence: 15
+  observability_surface: 15
+  entropy_control: 10
+  autonomy_readiness: 5
+
+# --- Dimension Check Items ---
+# Each check has a weight (points deducted on fail) and a description.
+# Status values: pass | fail | warn | not-run
+# Deduction rules:
+#   fail    = full weight deducted
+#   not-run = 50% weight deducted (unknown state is not pass)
+#   warn    = 25% weight deducted
+
+dimensions:
+  context_readability:
+    checks:
+      - id: nav_file_exists
+        description: "Navigation file (AGENTS.md or CLAUDE.md) exists at project root"
+        weight: 4
+      - id: nav_file_size
+        description: "Navigation file is under 200 lines (readable by agents)"
+        weight: 3
+      - id: docs_discoverable
+        description: "docs/ directory exists and contains index or README"
+        weight: 4
+      - id: context_snapshot_exists
+        description: "docs/harness/context-snapshot.md exists and is recent"
+        weight: 5
+      - id: runtime_surface_documented
+        description: "docs/runtime-surface.md or .harness/runtime.yml exists"
+        weight: 4
+
+  plan_discipline:
+    checks:
+      - id: exec_plans_dir_exists
+        description: "docs/exec-plans/active/ directory exists"
+        weight: 3
+      - id: tech_debt_tracker_exists
+        description: "docs/exec-plans/tech-debt-tracker.md exists"
+        weight: 3
+      - id: plans_have_status
+        description: "All active plans contain a Status field"
+        weight: 3
+      - id: pr_links_plan
+        description: "MR/PR descriptions include ExecPlan path"
+        weight: 3
+      - id: blocked_plans_documented
+        description: "Blocked/superseded plans are documented with reason"
+        weight: 3
+
+  architecture_enforcement:
+    checks:
+      - id: boundaries_doc_exists
+        description: "docs/architecture-boundaries.md exists"
+        weight: 4
+      - id: boundary_script_exists
+        description: "scripts/harness/check-boundaries.sh exists"
+        weight: 4
+      - id: boundary_gate_passes
+        description: "Architecture boundary gate check passes"
+        weight: 6
+      - id: no_forbidden_imports
+        description: "No forbidden cross-boundary imports detected"
+        weight: 6
+
+  test_confidence:
+    checks:
+      - id: test_command_configured
+        description: "Test command is configured in .harness/runtime.yml"
+        weight: 3
+      - id: tests_pass
+        description: "Test suite passes (exit code 0)"
+        weight: 4
+      - id: fixtures_exist
+        description: "Test fixtures directory exists with scenarios"
+        weight: 3
+      - id: golden_tests_pass
+        description: "Golden baseline tests pass"
+        weight: 3
+      - id: ci_runs_tests
+        description: "CI pipeline includes test execution"
+        weight: 2
+
+  observability_surface:
+    checks:
+      - id: observability_yml_exists
+        description: ".harness/observability.yml exists"
+        weight: 3
+      - id: query_logs_works
+        description: "query-logs.sh returns results (not not-run)"
+        weight: 3
+      - id: query_metrics_works
+        description: "query-metrics.sh returns results (not not-run)"
+        weight: 3
+      - id: ui_verification_configured
+        description: "UI verification provider is configured (not not-configured)"
+        weight: 3
+      - id: health_check_works
+        description: "Health check endpoint responds successfully"
+        weight: 3
+
+  entropy_control:
+    checks:
+      - id: entropy_gc_exists
+        description: "docs/entropy-gc.md exists"
+        weight: 2
+      - id: doc_gardening_configured
+        description: "Doc gardening schedule or automation is configured"
+        weight: 3
+      - id: no_expired_adr_exceptions
+        description: "No ADR exceptions past their expiry date"
+        weight: 3
+      - id: drift_detection_active
+        description: "Drift detection is active (golden tests or structure tests)"
+        weight: 2
+
+  autonomy_readiness:
+    checks:
+      - id: autonomy_yml_exists
+        description: ".harness/autonomy.yml exists"
+        weight: 1
+      - id: agent_autonomy_doc_exists
+        description: "docs/agent-autonomy.md exists"
+        weight: 1
+      - id: l2_criteria_met
+        description: "L2+ autonomy criteria are met (gates pass, score >= enforced_min)"
+        weight: 2
+      - id: approval_workflows_defined
+        description: "Approval workflows for dangerous operations are defined"
+        weight: 1

@@ -14,7 +14,7 @@ Repair mode should:
 - update old marker versions
 - regenerate missing canonical docs
 - convert legacy governance docs into compatibility alias files
-- migrate legacy root scripts into `.harness/scripts/*` or remove them when compatibility is no longer needed
+- convert legacy root scripts into wrappers to `scripts/harness/*`
 - preserve user-authored content
 
 ---
@@ -116,7 +116,7 @@ exec "$(dirname "$0")/harness/<script>.sh" "$@"
 
 ## ADR Exception Handling
 
-若门禁临时降级，必须存在 `.harness/docs/decisions/ADR-exceptions/*.md`，并包含：
+若门禁临时降级，必须存在 `docs/decisions/ADR-exceptions/*.md`，并包含：
 - `owner`
 - `expires_on`
 - `scope`

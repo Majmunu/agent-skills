@@ -1,0 +1,98 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+# Scope: root
+
+stages:
+  - harness-preflight
+  - harness-gates
+  - harness-score
+  - harness-security
+
+variables:
+  HARNESS_CI_MODE: ${HARNESS_CI_MODE:-bootstrap}
+
+# --- Stage: Preflight ---
+harness-preflight:
+  stage: harness-preflight
+  script:
+    - echo "Harness CI Mode: $HARNESS_CI_MODE"
+    - bash scripts/harness/check-critical.sh
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# --- Stage: Gates ---
+harness-check-placeholders:
+  stage: harness-gates
+  script:
+    - bash scripts/harness/check-placeholders.sh
+  allow_failure: true
+  rules:
+    - if: $HARNESS_CI_MODE == "bootstrap"
+      allow_failure: true
+    - if: $HARNESS_CI_MODE == "enforced"
+      allow_failure: false
+
+harness-check-alias:
+  stage: harness-gates
+  script:
+    - bash scripts/harness/check-alias-integrity.sh
+  allow_failure: true
+  rules:
+    - if: $HARNESS_CI_MODE == "bootstrap"
+      allow_failure: true
+    - if: $HARNESS_CI_MODE == "enforced"
+      allow_failure: false
+
+harness-check-wrapper:
+  stage: harness-gates
+  script:
+    - bash scripts/harness/check-wrapper-integrity.sh
+  allow_failure: true
+  rules:
+    - if: $HARNESS_CI_MODE == "bootstrap"
+      allow_failure: true
+    - if: $HARNESS_CI_MODE == "enforced"
+      allow_failure: false
+
+harness-plan-required:
+  stage: harness-gates
+  script:
+    - |
+      if [ "$CI_PIPELINE_SOURCE" = "merge_request_event" ]; then
+        echo "$CI_MERGE_REQUEST_DESCRIPTION" > .harness/pr-body.txt
+        GITHUB_EVENT_NAME=pull_request PR_BODY_FILE=.harness/pr-body.txt bash scripts/harness/check-plan-required.sh
+      else
+        echo "not-run: plan gate only runs on merge request events"
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# --- Stage: Score ---
+harness-quality-score:
+  stage: harness-score
+  script:
+    - bash scripts/harness/score-quality.sh
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# --- Stage: Security ---
+harness-check-secrets:
+  stage: harness-security
+  script:
+    - bash scripts/harness/check-secrets.sh
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+harness-check-permissions:
+  stage: harness-security
+  script:
+    - bash scripts/harness/check-permissions.sh
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

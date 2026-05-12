@@ -1,0 +1,53 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+version: 1
+
+# Gate configuration — defines which gates run and their severity
+mode: bootstrap  # bootstrap | enforced
+
+gates:
+  # --- Always blocking (both modes) ---
+  check-secrets:
+    severity: critical
+    blocking: always
+    script: scripts/harness/check-secrets.sh
+  check-permissions:
+    severity: critical
+    blocking: always
+    script: scripts/harness/check-permissions.sh
+  check-placeholders:
+    severity: critical
+    blocking: always
+    script: scripts/harness/check-placeholders.sh
+
+  # --- Blocking in enforced, warn in bootstrap ---
+  check-alias-integrity:
+    severity: high
+    blocking: enforced
+    script: scripts/harness/check-alias-integrity.sh
+  check-wrapper-integrity:
+    severity: high
+    blocking: enforced
+    script: scripts/harness/check-wrapper-integrity.sh
+  check-plan-required:
+    severity: high
+    blocking: enforced
+    script: scripts/harness/check-plan-required.sh
+    condition: pr_event_only
+
+  # --- Informational (never blocking) ---
+  score-quality:
+    severity: info
+    blocking: never
+    script: scripts/harness/score-quality.sh
+
+# Critical operations that always block regardless of mode
+always_block:
+  - secret_leak
+  - auth_change_without_approval
+  - data_migration_without_rollback
+  - production_deploy_without_approval
+  - root_navigation_pollution
+  - legacy_docs_governance_facts
+  - wrapper_contains_business_logic
+  - angle_bracket_placeholder_in_output

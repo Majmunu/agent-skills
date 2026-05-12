@@ -28,12 +28,11 @@ fixtures/
 ## Required Assertions
 
 每个 fixture 至少验证：
-- `SKILL.md` 通过 skill 校验，且正文保持精简（建议不超过 500 行）
 - root navigation file 不污染
 - project navigation file 生成正确
 - canonical docs 生成为事实源
 - legacy docs 被处理为 alias（不承载正文）
-- `.harness/scripts/*` 为主入口
+- `scripts/harness/*` 为主入口
 - legacy scripts 为 wrapper（无业务逻辑）
 - 重复运行不重复
 - 占位符检查符合预期（`<...>` fail, TODO warn）
@@ -47,8 +46,8 @@ fixtures/
 必须包含以下场景：
 - `plan-gate-fail`: 跨模块 PR 无 plan 引用，预期 fail
 - `plan-gate-pass`: 跨模块 PR 有有效 plan 且状态合法，预期 pass
-- `plan-scope-project-pass`: multi-project 单项目作用域改动，使用 `<project>/.harness/docs/exec-plans/*`，预期 pass
-- `plan-scope-root-pass`: multi-project 跨项目改动，使用 root `.harness/docs/exec-plans/*`，预期 pass
+- `plan-scope-project-pass`: multi-project 单项目作用域改动，使用 `<project>/docs/exec-plans/*`，预期 pass
+- `plan-scope-root-pass`: multi-project 跨项目改动，使用 root `docs/exec-plans/*`，预期 pass
 - `alias-drift-fail`: legacy 文档含治理正文，预期 fail
 - `wrapper-drift-fail`: legacy 脚本非纯 wrapper，预期 fail
 - `adr-expiry-fail`: ADR 例外过期仍尝试降级门禁，预期 fail

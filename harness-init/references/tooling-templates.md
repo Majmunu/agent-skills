@@ -15,7 +15,7 @@
 
 ### Shell 兼容规则
 
-- POSIX 优先：`.harness/scripts/*.sh` 作为 canonical。
+- POSIX 优先：`scripts/harness/*.sh` 作为 canonical。
 - 若运行环境无 `bash` 且目标团队长期使用 Windows：
   - 允许生成 `.ps1` 等效脚本或 wrapper。
   - 导航文档必须同时给出 POSIX 与 PowerShell 调用示例。
@@ -616,7 +616,7 @@ jobs:
           BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'origin/main' }}
           HEAD_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'HEAD' }}
           PR_LABELS: ${{ github.event_name == 'pull_request' && join(github.event.pull_request.labels.*.name, ',') || '' }}
-        run: bash .harness/scripts/check-critical.sh
+        run: bash scripts/harness/check-critical.sh
 ```
 
 ### enforced mode（正式门禁）
@@ -648,15 +648,15 @@ jobs:
         run: <validate-harness command>
       - name: Root navigation scope check (multi-project only)
         run: |
-          if [ -f .harness/scripts/check-agents-scope.mjs ]; then
-            node .harness/scripts/check-agents-scope.mjs
-          elif [ -f .harness/scripts/check-agents-scope.sh ]; then
-            bash .harness/scripts/check-agents-scope.sh
+          if [ -f scripts/check-agents-scope.mjs ]; then
+            node scripts/check-agents-scope.mjs
+          elif [ -f scripts/check-agents-scope.sh ]; then
+            bash scripts/check-agents-scope.sh
           else
-            echo "SKIP: .harness/scripts/check-agents-scope.sh/.mjs not found"
+            echo "SKIP: scripts/check-agents-scope.sh/.mjs not found"
           fi
       - name: Harness full gates (enforced)
-        run: bash .harness/scripts/check-all.sh
+        run: bash scripts/harness/check-all.sh
 ```
 
 ### GitLab CI（`.gitlab-ci.yml`）
@@ -674,7 +674,7 @@ bootstrap_observe:
     - HARNESS_TRACK=bootstrap HARNESS_STRICT_MODE=false make test
     - HARNESS_TRACK=bootstrap HARNESS_STRICT_MODE=false make arch-check
     - HARNESS_TRACK=bootstrap HARNESS_STRICT_MODE=false <validate-harness command>
-    - if [ -f .harness/scripts/check-agents-scope.mjs ]; then node .harness/scripts/check-agents-scope.mjs; elif [ -f .harness/scripts/check-agents-scope.sh ]; then bash .harness/scripts/check-agents-scope.sh; else echo "SKIP: .harness/scripts/check-agents-scope.sh/.mjs not found"; fi
+    - if [ -f scripts/check-agents-scope.mjs ]; then node scripts/check-agents-scope.mjs; elif [ -f scripts/check-agents-scope.sh ]; then bash scripts/check-agents-scope.sh; else echo "SKIP: scripts/check-agents-scope.sh/.mjs not found"; fi
   allow_failure: true
   rules:
     - when: always
@@ -685,7 +685,7 @@ critical_gates:
     - mkdir -p .harness
     - printf "%s" "${CI_MERGE_REQUEST_DESCRIPTION:-}" > .harness/pr-body.txt
     - EVENT_NAME="push"; if [ "${CI_PIPELINE_SOURCE:-}" = "merge_request_event" ]; then EVENT_NAME="pull_request"; fi
-    - GITHUB_EVENT_NAME="${EVENT_NAME}" PR_BODY_FILE=".harness/pr-body.txt" PR_LABELS="${CI_MERGE_REQUEST_LABELS:-}" BASE_REF="${CI_MERGE_REQUEST_DIFF_BASE_SHA:-origin/main}" HEAD_REF="${CI_COMMIT_SHA:-HEAD}" HARNESS_TRACK=bootstrap bash .harness/scripts/check-critical.sh
+    - GITHUB_EVENT_NAME="${EVENT_NAME}" PR_BODY_FILE=".harness/pr-body.txt" PR_LABELS="${CI_MERGE_REQUEST_LABELS:-}" BASE_REF="${CI_MERGE_REQUEST_DIFF_BASE_SHA:-origin/main}" HEAD_REF="${CI_COMMIT_SHA:-HEAD}" HARNESS_TRACK=bootstrap bash scripts/harness/check-critical.sh
   allow_failure: false
   rules:
     - when: always
@@ -705,7 +705,7 @@ harness_validate:
     - make arch-check
     - <validate-harness command>
     - if [ -f scripts/check-agents-scope.mjs ]; then node scripts/check-agents-scope.mjs; elif [ -f scripts/check-agents-scope.sh ]; then bash scripts/check-agents-scope.sh; else echo "SKIP: scripts/check-agents-scope.sh/.mjs not found"; fi
-    - HARNESS_TRACK=enforced HARNESS_STRICT_MODE=true bash .harness/scripts/check-all.sh
+    - HARNESS_TRACK=enforced HARNESS_STRICT_MODE=true bash scripts/harness/check-all.sh
   allow_failure: false
   rules:
     - when: always
@@ -715,21 +715,21 @@ harness_validate:
 
 ### Cross-module Plan Gate（PR 计划关联门禁）
 
-canonical 脚本：`.harness/scripts/check-plan-required.sh`
+canonical 脚本：`scripts/harness/check-plan-required.sh`
 
 门禁规则：
 - 若改动跨多个模块/作用域或命中规则（schema/CI/边界/infra/高风险标签），PR 必须关联 plan。
-- PR 描述必须包含可解析的 plan 路径（支持 root 与 project-scoped `.harness/docs/exec-plans/*`）。
+- PR 描述必须包含可解析的 plan 路径（支持 root 与 project-scoped `docs/exec-plans/*`）。
 - 被引用 plan 文件必须存在且状态合法（默认 `active|completed`，可通过规则文件扩展）。
 - active/completed 计划文件前 60 行必须有 `Status:` 字段。
 - 非 PR 事件（如 `push`）自动跳过。
 - multi-project：
-  - 单项目作用域变更优先要求 `<project>/.harness/docs/exec-plans/*`
-  - 跨项目/仓库级变更要求 `.harness/docs/exec-plans/*`
+  - 单项目作用域变更优先要求 `<project>/docs/exec-plans/*`
+  - 跨项目/仓库级变更要求 `docs/exec-plans/*`
 
 Pass examples:
-- `.harness/docs/exec-plans/active/2026-04-cross-project.md`
-- `apps/editor/.harness/docs/exec-plans/active/2026-04-editor.md`
+- `docs/exec-plans/active/2026-04-cross-project.md`
+- `apps/editor/docs/exec-plans/active/2026-04-editor.md`
 
 建议将可判定触发条件写入 `.harness/plan-required-rules.yml`。
 - 可选：`allowed_plan_statuses`（默认 `active|completed`，例如仅在特殊 ADR 下允许扩展）。
@@ -757,7 +757,7 @@ GitHub Actions 示例：
     HEAD_REF: ${{ github.event.pull_request.head.sha }}
     GITHUB_EVENT_NAME: ${{ github.event_name }}
     PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-  run: bash .harness/scripts/check-plan-required.sh
+  run: bash scripts/harness/check-plan-required.sh
 ```
 
 ### Doc-gardening 定时任务（自动闭环）
@@ -766,7 +766,7 @@ GitHub Actions 示例：
 - 扫描过期文档与规则漂移
 - 自动生成修复 PR（或补丁工单）
 - 更新 `feedback-loops.md` 与 `entropy-gc.md` 的维护记录
-- 建议产出 `.harness/docs/doc-gardening-report.md` 作为自动 PR 工件
+- 建议产出 `docs/harness/doc-gardening-report.md` 作为自动 PR 工件
 
 GitHub Actions 示例（报告 + 自动 PR）：
 
@@ -778,7 +778,7 @@ permissions:
 - name: Run doc-gardening and generate report
   env:
     DOC_GARDENING_WRITE_REPORT: "true"
-  run: bash .harness/scripts/doc-gardening.sh
+  run: bash scripts/harness/doc-gardening.sh
 
 - name: Create doc-gardening PR
   uses: peter-evans/create-pull-request@v6
@@ -788,7 +788,7 @@ permissions:
     body: |
       Automated doc-gardening report refresh.
       - source: scheduled workflow
-      - command: bash .harness/scripts/doc-gardening.sh
+      - command: bash scripts/harness/doc-gardening.sh
     branch: codex/doc-gardening-report
     delete-branch: true
 ```
@@ -796,33 +796,33 @@ permissions:
 ### 运行面脚本建议（agent 可读可执行）
 
 canonical script root：
-- `.harness/scripts/`
+- `scripts/harness/`
 
 multi-project 执行规则：
 - 所有 harness 脚本从 repository root 执行
 - 使用 `HARNESS_TARGET_SCOPE=<project-path>` 限定项目作用域
 
 建议统一入口：
-- `.harness/scripts/check-all.sh`：聚合门禁检查
-- `.harness/scripts/check-critical.sh`：bootstrap critical 强门禁（最小阻断面）
-- `.harness/scripts/check-placeholders.sh`：placeholder 过滤检查（忽略 harness marker）
-- `.harness/scripts/check-boundaries.sh`：边界门禁
-- `.harness/scripts/check-plan-required.sh`：跨模块计划门禁
-- `.harness/scripts/check-alias-integrity.sh`：alias 漂移门禁
-- `.harness/scripts/check-wrapper-integrity.sh`：legacy wrapper 残留门禁
-- `.harness/scripts/reproduce.sh`：问题复现
-- `.harness/scripts/validate.sh`：本地完整验证
-- `.harness/scripts/regression.sh`：回归测试
-- `.harness/scripts/pre-release.sh`：发布前检查
-- `.harness/scripts/query-logs.sh`：日志查询（SLO 验证）
-- `.harness/scripts/query-metrics.sh`：指标查询（SLO 验证）
+- `scripts/harness/check-all.sh`：聚合门禁检查
+- `scripts/harness/check-critical.sh`：bootstrap critical 强门禁（最小阻断面）
+- `scripts/harness/check-placeholders.sh`：placeholder 过滤检查（忽略 harness marker）
+- `scripts/harness/check-boundaries.sh`：边界门禁
+- `scripts/harness/check-plan-required.sh`：跨模块计划门禁
+- `scripts/harness/check-alias-integrity.sh`：alias 漂移门禁
+- `scripts/harness/check-wrapper-integrity.sh`：legacy wrapper 完整性门禁
+- `scripts/harness/reproduce.sh`：问题复现
+- `scripts/harness/validate.sh`：本地完整验证
+- `scripts/harness/regression.sh`：回归测试
+- `scripts/harness/pre-release.sh`：发布前检查
+- `scripts/harness/query-logs.sh`：日志查询（SLO 验证）
+- `scripts/harness/query-metrics.sh`：指标查询（SLO 验证）
 
-fresh init 默认不生成 legacy 根脚本：
+legacy 根脚本仅允许 wrapper：
 
 ```bash
-scripts/check-all.sh
-scripts/validate.sh
-scripts/regression.sh
+#!/usr/bin/env bash
+set -euo pipefail
+exec "$(dirname "$0")/harness/validate.sh" "$@"
 ```
 
 ---
@@ -832,7 +832,7 @@ scripts/regression.sh
 建议在仓库维护：
 - `.harness/gate-severity.yml`
 - `.harness/canonical-paths.yml`（可选，供 alias-integrity 动态读取 legacy 映射）
-- `.harness/docs/decisions/ADR-exceptions/*.md`
+- `docs/decisions/ADR-exceptions/*.md`
 
 规则：
 - security/auth/data-migration 检查在命中对应变更范围或 PR label 时，在 bootstrap 与 enforced 都阻断。
@@ -871,7 +871,7 @@ echo "Running <gate-name> on scope: ${scope}"
 exit 2
 ```
 
-`.harness/scripts/check-all.sh`（完整聚合模板）：
+`scripts/harness/check-all.sh`（完整聚合模板）：
 
 ```bash
 #!/usr/bin/env bash
@@ -974,14 +974,14 @@ run_gate() {
   fi
 }
 
-run_gate "boundaries" "$BASH_BIN" .harness/scripts/check-boundaries.sh
-run_gate "plan-required" "$BASH_BIN" .harness/scripts/check-plan-required.sh
-run_gate "file-size" "$BASH_BIN" .harness/scripts/check-file-size.sh
-run_gate "naming" "$BASH_BIN" .harness/scripts/check-naming.sh
-run_gate "logging" "$BASH_BIN" .harness/scripts/check-logging.sh
-run_gate "placeholder-angle" "$BASH_BIN" .harness/scripts/check-placeholders.sh
-run_gate "alias-integrity" "$BASH_BIN" .harness/scripts/check-alias-integrity.sh
-run_gate "wrapper-integrity" "$BASH_BIN" .harness/scripts/check-wrapper-integrity.sh
+run_gate "boundaries" "$BASH_BIN" scripts/harness/check-boundaries.sh
+run_gate "plan-required" "$BASH_BIN" scripts/harness/check-plan-required.sh
+run_gate "file-size" "$BASH_BIN" scripts/harness/check-file-size.sh
+run_gate "naming" "$BASH_BIN" scripts/harness/check-naming.sh
+run_gate "logging" "$BASH_BIN" scripts/harness/check-logging.sh
+run_gate "placeholder-angle" "$BASH_BIN" scripts/harness/check-placeholders.sh
+run_gate "alias-integrity" "$BASH_BIN" scripts/harness/check-alias-integrity.sh
+run_gate "wrapper-integrity" "$BASH_BIN" scripts/harness/check-wrapper-integrity.sh
 
 if [ "$failed" -ne 0 ]; then
   echo "Harness checks FAILED"
@@ -991,7 +991,7 @@ fi
 echo "Harness checks PASSED"
 ```
 
-`.harness/scripts/check-file-size.sh`：
+`scripts/harness/check-file-size.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1002,7 +1002,7 @@ echo "TODO: enforce max file size policy"
 exit 2
 ```
 
-`.harness/scripts/check-placeholders.sh`：
+`scripts/harness/check-placeholders.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1011,9 +1011,9 @@ set -euo pipefail
 targets=()
 [ -f "AGENTS.md" ] && targets+=("AGENTS.md")
 [ -f "CLAUDE.md" ] && targets+=("CLAUDE.md")
-[ -d ".harness/docs" ] && targets+=(".harness/docs")
+[ -d "docs" ] && targets+=("docs")
 for p in apps/* packages/* services/*; do
-  [ -d "$p/.harness/docs" ] && targets+=("$p/.harness/docs")
+  [ -d "$p/docs" ] && targets+=("$p/docs")
 done
 
 if [ "${#targets[@]}" -eq 0 ]; then
@@ -1040,7 +1040,7 @@ fi
 echo "PASS: placeholder-angle"
 ```
 
-`.harness/scripts/check-critical.sh`：
+`scripts/harness/check-critical.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1113,10 +1113,10 @@ run_conditional_domain_gate() {
   fi
 }
 
-run_required_gate "plan-required" ".harness/scripts/check-plan-required.sh"
-run_required_gate "placeholder-angle" ".harness/scripts/check-placeholders.sh"
-run_required_gate "alias-integrity" ".harness/scripts/check-alias-integrity.sh"
-run_required_gate "wrapper-integrity" ".harness/scripts/check-wrapper-integrity.sh"
+run_required_gate "plan-required" "scripts/harness/check-plan-required.sh"
+run_required_gate "placeholder-angle" "scripts/harness/check-placeholders.sh"
+run_required_gate "alias-integrity" "scripts/harness/check-alias-integrity.sh"
+run_required_gate "wrapper-integrity" "scripts/harness/check-wrapper-integrity.sh"
 
 # expired ADR exceptions (always blocking)
 today="$(date +%F)"
@@ -1136,25 +1136,25 @@ while IFS= read -r f; do
     failed=1
   fi
 done <<EOF
-$(find .harness/docs/decisions/ADR-exceptions -type f -name '*.md' 2>/dev/null || true)
+$(find docs/decisions/ADR-exceptions -type f -name '*.md' 2>/dev/null || true)
 EOF
 
 # domain-specific critical gates (security/auth/data-migration)
 run_conditional_domain_gate \
   "security" \
-  ".harness/scripts/check-security.sh" \
+  "scripts/harness/check-security.sh" \
   '(^|/)(security|secrets?|iam|policy|policies|waf|sast|dast|csp|csrf|xss|injection)/|(^|/)(secrets?|vault)/' \
   'security'
 
 run_conditional_domain_gate \
   "auth" \
-  ".harness/scripts/check-auth.sh" \
+  "scripts/harness/check-auth.sh" \
   '(^|/)(auth|authentication|authorization|oauth|oidc|sso|jwt|token|session|rbac|permission)/|(^|/)(login|signup)/' \
   'auth|authentication|authorization'
 
 run_conditional_domain_gate \
   "data-migration" \
-  ".harness/scripts/check-data-migration.sh" \
+  "scripts/harness/check-data-migration.sh" \
   '(^|/)(migrations?|schema|database|db|ddl|sql)/|\.sql$|\.ddl$' \
   'migration|data-migration|schema'
 
@@ -1166,7 +1166,7 @@ fi
 echo "Critical gates PASSED"
 ```
 
-`.harness/scripts/check-naming.sh`：
+`scripts/harness/check-naming.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1177,7 +1177,7 @@ echo "TODO: enforce naming conventions"
 exit 2
 ```
 
-`.harness/scripts/check-logging.sh`：
+`scripts/harness/check-logging.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1188,7 +1188,7 @@ echo "TODO: enforce logging schema/fields"
 exit 2
 ```
 
-`.harness/scripts/check-alias-integrity.sh`：
+`scripts/harness/check-alias-integrity.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1249,7 +1249,7 @@ fi
 echo "PASS: alias integrity"
 ```
 
-`.harness/scripts/check-wrapper-integrity.sh`：
+`scripts/harness/check-wrapper-integrity.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1265,8 +1265,8 @@ failed=0
 
 for f in $legacy_scripts; do
   [ -f "$f" ] || continue
-  if [ -f "$f" ]; then
-    echo "FAIL: legacy wrapper should not exist after clean-cut migration: $f"
+  if ! grep -Eq 'exec .*/harness/.+ "\$@"' "$f"; then
+    echo "FAIL: $f is not a pure wrapper to scripts/harness/*"
     failed=1
   fi
 done
@@ -1278,18 +1278,18 @@ fi
 echo "PASS: wrapper integrity"
 ```
 
-`.harness/scripts/doc-gardening.sh`：
+`scripts/harness/doc-gardening.sh`：
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-report=".harness/docs/doc-gardening-report.md"
-mkdir -p "$(dirname "$report")"
+report="docs/harness/doc-gardening-report.md"
+mkdir -p docs/harness
 
-stale_plans="$(find . -path '*/.harness/docs/exec-plans/active/*.md' -type f -mtime +30 2>/dev/null || true)"
+stale_plans="$(find . -path '*/docs/exec-plans/active/*.md' -type f -mtime +30 2>/dev/null || true)"
 expired_adr=""
-if [ -d .harness/docs/decisions/ADR-exceptions ]; then
+if [ -d docs/decisions/ADR-exceptions ]; then
   today="$(date +%F)"
   while IFS= read -r f; do
     [ -z "$f" ] && continue
@@ -1306,7 +1306,7 @@ if [ -d .harness/docs/decisions/ADR-exceptions ]; then
       expired_adr+="$f"$'\n'
     fi
   done <<EOF
-$(find .harness/docs/decisions/ADR-exceptions -type f -name '*.md' 2>/dev/null || true)
+$(find docs/decisions/ADR-exceptions -type f -name '*.md' 2>/dev/null || true)
 EOF
 fi
 
@@ -1338,7 +1338,7 @@ fi
 echo "PASS: doc-gardening"
 ```
 
-`.harness/scripts/reproduce.sh`：
+`scripts/harness/reproduce.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1354,7 +1354,7 @@ echo "INFO: HARNESS_REPRO_COMMAND is not configured"
 exit 2
 ```
 
-`.harness/scripts/validate.sh`：
+`scripts/harness/validate.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1363,13 +1363,13 @@ set -euo pipefail
 track="${HARNESS_TRACK:-enforced}"
 BASH_BIN="${BASH:-bash}"
 if [ "$track" = "bootstrap" ]; then
-  HARNESS_STRICT_MODE="${HARNESS_STRICT_MODE:-false}" "$BASH_BIN" .harness/scripts/check-all.sh
+  HARNESS_STRICT_MODE="${HARNESS_STRICT_MODE:-false}" "$BASH_BIN" scripts/harness/check-all.sh
 else
-  HARNESS_STRICT_MODE="${HARNESS_STRICT_MODE:-true}" "$BASH_BIN" .harness/scripts/check-all.sh
+  HARNESS_STRICT_MODE="${HARNESS_STRICT_MODE:-true}" "$BASH_BIN" scripts/harness/check-all.sh
 fi
 ```
 
-`.harness/scripts/regression.sh`：
+`scripts/harness/regression.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1384,18 +1384,18 @@ echo "INFO: HARNESS_REGRESSION_COMMAND is not configured"
 exit 2
 ```
 
-`.harness/scripts/pre-release.sh`：
+`scripts/harness/pre-release.sh`：
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
 BASH_BIN="${BASH:-bash}"
-"$BASH_BIN" .harness/scripts/check-critical.sh
-"$BASH_BIN" .harness/scripts/check-all.sh
+"$BASH_BIN" scripts/harness/check-critical.sh
+"$BASH_BIN" scripts/harness/check-all.sh
 ```
 
-`.harness/scripts/query-logs.sh`：
+`scripts/harness/query-logs.sh`：
 
 ```bash
 #!/usr/bin/env bash
@@ -1410,7 +1410,7 @@ echo "INFO: query logs from backend=${LOG_BACKEND} scope=${HARNESS_TARGET_SCOPE:
 exit 0
 ```
 
-`.harness/scripts/query-metrics.sh`：
+`scripts/harness/query-metrics.sh`：
 
 ```bash
 #!/usr/bin/env bash

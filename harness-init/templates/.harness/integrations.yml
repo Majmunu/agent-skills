@@ -1,0 +1,90 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+# Scope: root
+#
+# External integration configuration for code host, issue tracker, and MCP tools.
+# Integration scripts in scripts/harness/ read this file to determine providers and credentials.
+# SECURITY: Never store real tokens here — use environment variable references only.
+
+version: 1
+
+# --- Code Host ---
+# Supported providers: gitlab | github | not-configured
+code_host:
+  provider: gitlab
+  # Base URL of the code host instance
+  # Examples:
+  #   gitlab: https://gitlab.example.com
+  #   github: https://github.com
+  base_url: "TODO: 待补充"
+  # Environment variable holding the API token (never write real tokens here)
+  token_env: GITLAB_TOKEN
+  # Require merge request for all changes
+  merge_request_required: true
+  # Require ExecPlan link in MR description
+  plan_link_required: true
+  # Default target branch for merge requests
+  default_branch: main
+  # MR description template path (relative to project root)
+  mr_template: "docs/templates/merge-request.md"
+
+# --- Issue Tracker ---
+# Supported providers: youtrack | jira | linear | not-configured
+issue_tracker:
+  provider: youtrack
+  # Base URL of the issue tracker instance
+  # Examples:
+  #   youtrack: https://youtrack.example.com
+  #   jira: https://jira.example.com
+  #   linear: https://linear.app
+  base_url: "TODO: 待补充"
+  # Environment variable holding the API token (never write real tokens here)
+  token_env: YOUTRACK_TOKEN
+  # Project identifier in the issue tracker
+  project_id: "TODO: 待补充"
+  # Whether an issue link is required before creating a plan
+  required_for_plan: false
+
+# --- MCP (Model Context Protocol) ---
+# Configuration for MCP server integrations and safety boundaries.
+mcp:
+  # Master switch for MCP integrations
+  enabled: false
+  # Dangerous operations that ALWAYS require human approval before execution.
+  # These operations are blocked by check-permissions.sh until explicit approval is obtained.
+  dangerous_operations:
+    - delete
+    - force-push
+    - production-deploy
+    - permission-change
+    - database-migration
+    - secret-rotation
+  # Approval policy for dangerous operations
+  approval:
+    # How approval is recorded (comment | label | api-call)
+    method: comment
+    # Who can approve (team roles or specific users)
+    approvers:
+      - tech-lead
+      - security
+    # Approval timeout before auto-reject (e.g., "24h", "72h")
+    timeout: "24h"
+  # MCP server definitions
+  servers:
+    # Browser automation MCP server
+    browser:
+      provider: "TODO: 待补充"
+      # Operations from this server that require approval
+      approval_required_for:
+        - delete
+        - production-deploy
+        - permission-change
+        - database-migration
+        - secret-rotation
+        - force-push
+    # Additional MCP servers can be added here:
+    # filesystem:
+    #   provider: "TODO: 待补充"
+    #   approval_required_for:
+    #     - delete
+    #     - permission-change

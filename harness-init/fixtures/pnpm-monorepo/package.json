@@ -1,0 +1,15 @@
+{
+  "name": "pnpm-monorepo-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PNPM monorepo fixture for harness-init testing",
+  "scripts": {
+    "dev": "pnpm -r run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

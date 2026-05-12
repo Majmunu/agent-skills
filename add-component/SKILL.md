@@ -1,0 +1,593 @@
+---
+name: add-component
+description: >
+  Quick-add a zero-code editor component. Covers runtime (snify) and designer (editor)
+  file creation and registration, including property panel, events, actions, variables,
+  and CSS variable style semantic layer.
+---
+
+# Add Component Skill
+
+> Standard flow for adding a complete component to this zero-code editor.
+> Each component requires files in **two packages**: **5 files + 4 registrations**.
+
+## Architecture Overview
+
+```
+mini_workspace/
+packages/snify/src/
+  components/{Name}/                <- Runtime component (Preview / Mini Program)
+    index.tsx                       <- Component impl (observer + connect + withCustomWrapper)
+    style-api.ts                    <- (Recommended) Style semantic layer / CSS var mapping (kebab-case)
+    {name}.module.scss              <- (Optional) Component private styles
+  components/registry.ts            <- Registration 1: runtime export
+  config/components/{Name}.json     <- Panel config (properties / events / actions)
+  config/components/index.ts        <- Registration 2: config import mapping
+
+apps/editor/src/designable/designable-components/
+  {Name}/index.tsx                  <- Designer adapter (DnFC + Behavior + Resource)
+  index.ts                          <- Registration 3: designer export
+
+apps/editor/src/app.tsx             <- Registration 4: import + ResourceWidget + ComponentTreeWidget
+```
+
+### Two Directory Responsibilities
+
+| Directory | Role | Description |
+|---|---|---|
+| `components/{Name}/` | **Component impl** | How the component looks and runs |
+| `config/components/{Name}.json` | **Panel config** | What can be configured in the editor's right panel |
+
+---
+
+## Step 1: Create Runtime Component
+
+**Path**: `packages/snify/src/components/{Name}/index.tsx`
+
+### Template (Following Button New Architecture)
+
+```tsx
+import { connect, mapProps, observer } from '@formily/react'
+import type { typePropsBase } from '../type'
+import { useComponentStyles } from '../../workbench/PanelEditor/hooks/useComponentStyles'
+import { useComponentVariables } from '../../core'
+import { withCustomWrapper } from '../../hocs/withCustomWrapper'
+import { {Name}StyleSchema, {Name}InitialProps } from './style-api'
+import './{name}.module.scss'
+
+// ===== 1. Define Props Type =====
+type typeProps = typePropsBase & Partial<{
+  id: string
+  // Component-specific static props (prefer variable system; these are fallbacks)
+  // loading: boolean
+  // disabled: boolean
+}>
+
+// ===== 2. Observer Component =====
+export const {Name}Component = observer(({ children, ...props }: typeProps) => {
+  const {
+    attributes,
+    style: propsStyle,
+    id,
+    ...restProps
+  } = props
+
+  // ⚠️ CRITICAL: Read custom properties from `attributes`, NOT from top-level props!
+  // The PropertyPanel writes fieldName values to x-component-props.attributes[fieldName].
+  // Example: config JSON defines { fieldName: "shape" }
+  //   → stored at x-component-props.attributes.shape
+  //   → accessible as props.attributes.shape (NOT props.shape)
+
+  // ===== 3. Merge defaults with panel attributes =====
+  // New architecture: no mergeAttributs callback to write back to designer tree.
+  // Instead, InitialProps provides fallback + attributes override in memory.
+  const finalAttributes = { ...{Name}InitialProps, ...attributes }
+
+  // ===== 4. Style System =====
+  // With style-api.ts managing color/border/font:
+  //   commonScope: 'layout-only'  -> only generate common layout vars, skip appearance
+  //   bindingScope: 'layout-only' -> only inject layout style bindings, appearance via CSS
+  // Simple components (no style-api) can use 'all' for both.
+  const { style: styles } = useComponentStyles(finalAttributes, {Name}StyleSchema, {
+    commonScope: 'layout-only',
+    bindingScope: 'layout-only',
+  })
+
+  // ===== 5. Component Variable System =====
+  const componentVars = useComponentVariables(id || '')
+  // Priority: component variable > props static value
+  // WARNING: variable name must match the 'name' field in x-variable-schema exactly
+  // const isLoading = componentVars.loading !== undefined
+  //   ? Boolean(componentVars.loading) : props.loading
+
+  // ===== 6. Merge Styles =====
+  const mergedStyle: Record<string, unknown> = {
+    ...(styles as Record<string, unknown>),
+    ...propsStyle,
+  }
+
+  // ===== 7. Render =====
+  return (
+    <div id={id} style={mergedStyle} {...restProps}>
+      {/* Use @taroify/core components or custom JSX */}
+    </div>
+  )
+})
+
+// ===== 8. Formily Connect =====
+export const {Name}Base = connect(
+  {Name}Component,
+  mapProps((props) => ({ ...props }))
+)
+
+// ===== 9. Export Style API (for external consumption) =====
+export { {Name}StyleKeys, {Name}StyleSchema, {Name}InitialProps } from './style-api'
+
+// ===== 10. Event System HOC =====
+export const {Name} = withCustomWrapper({Name}Base)
+```
+
+### commonScope Selection Guide
+
+| Scenario | commonScope | bindingScope | Notes |
+|---|---|---|---|
+| Has `style-api.ts`, component self-manages appearance | `layout-only` | `layout-only` | Avoids common + private dual-path conflict |
+| No `style-api.ts`, fully relies on common properties | `all` | `all` | Simple mode |
+
+### Event System
+
+`withCustomWrapper` auto-intercepts these events and dispatches to the global event bus.
+**No manual event dispatch code needed**:
+
+| Event | Strategy | Delay |
+|---|---|---|
+| `onChange`, `onInput` | Debounce | 300ms |
+| `onClick`, `onTap`, `onTouchStart` | Throttle | 500ms |
+| `onFocus`, `onBlur` | Normal | Immediate |
+
+> But the component must declare `supportedEvents` in `config/components/{Name}.json`
+> for it to appear in the editor's interaction panel.
+
+### Interaction Contract Rules
+
+Event/action options are contract-backed. Before adding any value to
+`supportedEvents` or `supportedActions`, verify it exists in:
+
+```
+packages/snify/src/core/interaction/contract/registry.ts
+```
+
+Rules:
+
+| Field | Rule |
+|---|---|
+| `supportedEvents` | Use standard event keys from `EventContract.key`, e.g. `click`, `change`, `input`, `focus`, `blur`. Do not use `onClick` in JSON. |
+| `supportedActions` | Use **canonical** action keys only (e.g. `setNavigationBarTitle`, NOT legacy alias `setPageTitle`). Action must be `active + runtimeSupported + editorConfigurable`. See `add-property-config` Skill Step V9 for validation. |
+| Planned actions | Do not expose in normal component JSON. `request`, `setState`, `reLaunch`, `showToast`, `showOrHide` are planned unless a handler + contract explicitly makes them active. |
+| Component forwarding | If JSON declares an event, the component must call the injected external handler, e.g. `onChange?.(value)`, after internal state updates. |
+| New event/action | Add or update the interaction contract first, then JSON, then tests. |
+
+Reference training doc:
+
+```
+packages/snify/docs/事件合同与交互流转规范.md
+```
+
+---
+
+## Step 2: Create style-api.ts (Recommended)
+
+**Path**: `packages/snify/src/components/{Name}/style-api.ts`
+
+> WARNING: Use **kebab-case** filename (`style-api.ts`), not the legacy `style_api.ts`.
+
+This file defines the **Component Semantic Layer (Layer 3)**, mapping panel design fields
+to component-controlled CSS variables.
+
+```ts
+/**
+ * {Name} Component Style API
+ * Component Semantic Layer (Layer 3):
+ * - Maps common fields (fillColor, fontSize...) to component semantic vars (--sn-{name}-*)
+ * - Supports one-to-many mapping (e.g., fillColor -> default/hover/active)
+ */
+
+import type { ComponentStyleSchema } from '../../core'
+import { Transformers, Parsers } from '../../core'
+import { safePxTransform } from '../utils'
+
+// ===== CSS Variable Namespace =====
+export const {Name}StyleKeys = {
+  color: {
+    bg: '--sn-{name}-color-bg',
+    text: '--sn-{name}-color-text',
+    border: '--sn-{name}-color-border',
+  },
+  layout: {
+    radius: '--sn-{name}-layout-radius',
+    fontSize: '--sn-{name}-layout-font-size',
+    height: '--sn-{name}-layout-height',
+  },
+} as const
+
+// ===== Panel Field -> CSS Variable Mapping =====
+export const {Name}StyleSchema: ComponentStyleSchema = {
+  fillColor: {
+    cssVar: {Name}StyleKeys.color.bg,
+    transform: Transformers.identity,
+    parse: Parsers.color,
+    when: (values) => values.fillType === 'solid',
+  },
+  color: {
+    cssVar: {Name}StyleKeys.color.text,
+    transform: Transformers.identity,
+    parse: Parsers.color,
+  },
+  strokeColor: {
+    cssVar: {Name}StyleKeys.color.border,
+    transform: Transformers.identity,
+    parse: Parsers.color,
+  },
+  fontSize: {
+    cssVar: {Name}StyleKeys.layout.fontSize,
+    transform: Transformers.transform,
+  },
+  radius: {
+    cssVar: {Name}StyleKeys.layout.radius,
+    transform: Transformers.borderRadius,
+    parse: Parsers.px,
+  },
+}
+
+// ===== Initial default attributes when dragged in =====
+// CAUTION: Avoid strong visual defaults (fillColor/textColor) here,
+// or Layer4 instance variables will be generated prematurely,
+// overriding theme Token fallback chain.
+export const {Name}InitialProps = {
+  width: '100%',
+  height: safePxTransform(96),
+  fillType: 'solid',
+  strokeType: 'none',
+  strokeWidth: 1,
+}
+```
+
+---
+
+## Step 3: Create Component Styles (Optional)
+
+**Path**: `packages/snify/src/components/{Name}/{name}.module.scss`
+
+```scss
+.{name} {
+  display: flex;
+  align-items: center;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  // Use :global to override third-party UI library styles
+  :global {
+    .taroify-xxx {
+      // Consume CSS variables from style-api
+      background-color: var(--sn-{name}-color-bg, transparent);
+      color: var(--sn-{name}-color-text, #333);
+      border-radius: var(--sn-{name}-layout-radius, 0);
+    }
+  }
+}
+```
+
+---
+
+## Step 4: Create Panel Config JSON
+
+**Path**: `packages/snify/src/config/components/{Name}.json`
+
+> WARNING: Path is `config/components/`, NOT `components/{Name}/`!
+> System loads via `config/components/index.ts`. Wrong path = config not loaded.
+
+### ➡️ Cross-Skill Reference
+
+For complete property configuration rules, naming conventions, setter types, visibility logic,
+events/actions, and validation rules, **read the dedicated Skill**:
+
+```
+.codex/skills/add-property-config/SKILL.md
+```
+
+That Skill covers:
+- `ComponentConfig` schema (6 top-level fields)
+- 6 fixed category keys (DO NOT create new ones)
+- 23+ setter types with extra fields
+- Property naming: `{componentName}_{fieldName}` format
+- `fieldName` global uniqueness requirement
+- `visibleWhen` conditional visibility (4 operators, and/or logic)
+- `linkedFields` value linking
+- `supportedEvents` / `supportedActions` with contract verification
+- `defaultValue` special formats (tuple, JSON string, etc.)
+- Complete examples (minimal → complex)
+
+### Quick Template
+
+```json
+{
+  "disabledCommonProps": [],
+  "visibleWhenOverrides": {},
+  "propertyStyleOverrides": {},
+  "customGroups": [
+    {
+      "key": "{name}Basic",
+      "label": "基础设置",
+      "categoryKey": "component"
+    }
+  ],
+  "customProperties": [
+    {
+      "key": "{name}_title",
+      "label": "标题",
+      "fieldName": "title",
+      "type": "TextInput",
+      "defaultValue": "标题",
+      "groupKey": "{name}Basic",
+      "categoryKey": "component"
+    }
+  ],
+  "supportedEvents": ["click"],
+  "supportedActions": ["setVariable"]
+}
+```
+
+### ⚠️ Property Storage Path (Critical)
+
+Custom properties defined in `customProperties[].fieldName` are stored in a **nested** location:
+
+```
+PropertyPanel onChange(fieldName, value)
+  → AttributeSidebar writes to:
+    node.props['x-component-props'].attributes[fieldName]
+  → Runtime component receives:
+    props.attributes[fieldName]
+```
+
+**NOT** `x-component-props[fieldName]` (top-level). This means:
+
+```tsx
+// ✅ CORRECT: Read from attributes
+const shape = (attributes.shape as string) || 'square'
+const isDisabled = Boolean(attributes.disabled)
+
+// ❌ WRONG: Read from top-level props (these will always be undefined)
+const { shape, disabled } = props  // shape/disabled are NOT here!
+```
+
+This applies to ALL custom properties defined in config JSON. Only formily-managed
+props (like `value`, `onChange`, `dataSource`) come as top-level props.
+
+---
+
+## Step 5: Register Runtime Export (Registration 1)
+
+**File**: `packages/snify/src/components/registry.ts`
+
+Add one line:
+
+```ts
+export * from './{Name}'
+```
+
+---
+
+## Step 6: Register Panel Config (Registration 2)
+
+**File**: `packages/snify/src/config/components/index.ts`
+
+Add import and mapping:
+
+```ts
+// At the top import section:
+import {Name} from './{Name}.json'
+
+// In the componentConfigs object:
+export const componentConfigs: Record<string, ComponentConfig> = {
+  // ... existing
+  {Name},
+}
+```
+
+> WARNING: Skip this step = property panel, event panel, action panel ALL BLANK!
+
+---
+
+## Step 7: Create Designer Adapter
+
+**Path**: `apps/editor/src/designable/designable-components/{Name}/index.tsx`
+
+```tsx
+import React from 'react'
+import { {Name} as Component } from 'snify'
+
+import {
+  createBehavior,
+  createResource,
+} from '@/designable/designable-core/src'
+import { DnFC } from '@/designable/designable-react/src'
+
+// ===== Designer Wrapper Component =====
+export const {Name}: DnFC<React.ComponentProps<typeof Component>> = (
+  props: any,
+) => {
+  return (
+    <Component
+      {...props}
+      id={props['data-designer-node-id']}
+    >
+      {props.children}
+    </Component>
+  )
+}
+
+// ===== Behavior: Designer behavior definition =====
+{Name}.Behavior = createBehavior({
+  name: '{Name}',                    // Unique ID (must match x-component)
+  extends: ['Field'],                // Fixed inheritance
+  selector: (node) => node.props['x-component'] === '{Name}',
+  designerProps: {},
+  designerLocales: {
+    'zh-CN': {
+      title: '{Chinese Name}',
+    },
+  },
+})
+
+// ===== Resource: Drag resource definition =====
+{Name}.Resource = createResource({
+  icon: 'CardSource',                 // Options: 'CardSource', 'InputSource', etc.
+  title: '{Chinese Name}',
+  elements: [
+    {
+      componentName: 'Field',
+      props: {
+        type: 'basic',               // 'basic' = basic component category
+        title: '{Chinese Name}',
+        'x-component': '{Name}',     // Must match Behavior.name
+        'x-component-props': {
+          // Default props when dragged in
+        },
+        // ===== Component Variable Definition (Optional) =====
+        // Auto-registered to variable system on drag. Names must match both sides.
+        'x-variable-schema': {
+          value: {
+            scope: 'component',
+            name: 'value',           // <- runtime reads componentVars.value
+            varType: 'string',
+            defaultValue: 'default',
+            desc: 'Component value',
+          },
+          disabled: {
+            scope: 'component',
+            name: 'disabled',        // <- runtime reads componentVars.disabled
+            varType: 'boolean',
+            defaultValue: false,
+            desc: 'Disabled state',
+          },
+        },
+      },
+    },
+  ],
+})
+```
+
+### Component Variable Lifecycle
+
+Variable names declared in designer and consumed in runtime must be **exactly the same**:
+
+```
+Designer Resource                  Runtime Component
+x-variable-schema: {               useComponentVariables(id)
+  value: {                               |
+    name: 'value',   --- addNode -->  VariableStore.register()
+    varType: 'string',                    |
+    defaultValue: '...'              componentVars.value  <- same name
+  }
+}
+```
+
+---
+
+## Step 8: Register Designer Export (Registration 3)
+
+**File**: `apps/editor/src/designable/designable-components/index.ts`
+
+Add one line:
+
+```ts
+export * from './{Name}'
+```
+
+---
+
+## Step 9: Register in app.tsx (Registration 4)
+
+**File**: `apps/editor/src/app.tsx`
+
+### 9a. Import
+
+```tsx
+import {
+  // ... existing imports
+  {Name},
+} from '@/designable/designable-components'
+```
+
+### 9b. ResourceWidget
+
+Add to the appropriate `<ResourceWidget>` sources array:
+
+```tsx
+<ResourceWidget title="sources.Displays" sources={[..., {Name}]} />
+```
+
+### 9c. ComponentTreeWidget
+
+Add to `<ComponentTreeWidget>` components object:
+
+```tsx
+<ComponentTreeWidget
+  components={{
+    // ... existing
+    {Name},
+  }}
+/>
+```
+
+---
+
+## Complete Checklist
+
+```markdown
+### File Creation
+- [ ] 1. `packages/snify/src/components/{Name}/index.tsx` - Runtime component
+- [ ] 2. `packages/snify/src/components/{Name}/style-api.ts` - Style API (recommended, kebab-case)
+- [ ] 3. `packages/snify/src/components/{Name}/{name}.module.scss` - Styles (optional)
+- [ ] 4. `packages/snify/src/config/components/{Name}.json` - Panel config (properties + events + actions)
+- [ ] 5. `apps/editor/src/designable/designable-components/{Name}/index.tsx` - Designer adapter
+
+### Registration (4 places)
+- [ ] 6. `packages/snify/src/components/registry.ts` - Add export
+- [ ] 7. `packages/snify/src/config/components/index.ts` - Add import + mapping
+- [ ] 8. `apps/editor/src/designable/designable-components/index.ts` - Add export
+- [ ] 9. `apps/editor/src/app.tsx` - import + ResourceWidget + ComponentTreeWidget
+
+### Verification
+- [ ] 10. `pnpm run lint` - No errors
+- [ ] 11. Refresh editor -> Component visible in sidebar
+- [ ] 12. Drag to canvas -> Renders correctly
+- [ ] 13. Right panel properties -> Custom properties display correctly
+- [ ] 14. Right panel interaction -> Events and actions are selectable
+- [ ] 15. Interaction contract checked -> Every `supportedEvents` / `supportedActions` entry exists in `contract/registry.ts`
+- [ ] 16. Event forwarding checked -> Declared component events call injected handlers (`onChange?.`, `onInput?.`, etc.)
+```
+
+---
+
+## Placeholder Reference
+
+| Placeholder | Example | Description |
+|---|---|---|
+| `{Name}` | `Rating` | PascalCase component name |
+| `{name}` | `rating` | lowercase component name |
+| `{Chinese Name}` | Rating Component | Display name in editor |
+
+---
+
+## Reference Examples
+
+| Component | Characteristics | Recommendation |
+|---|---|---|
+| **Button** | New architecture: `style-api.ts` + `layout-only` + no `mergeAttributs` | Primary reference |
+| Switch | Legacy: `style_api.ts` + `mergeAttributs` writeback | Structure reference only |
+| Input | Legacy: variable binding but no `x-variable-schema` | Do not follow |
+
+> **New components must follow Button's new architecture.**
+> Do NOT use legacy `mergeAttributs` writeback or `style_api.ts` naming.

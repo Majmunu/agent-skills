@@ -1,0 +1,47 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+version: 1
+
+# Context snapshot configuration
+# Defines what to include in docs/harness/context-snapshot.md
+
+output_path: docs/harness/context-snapshot.md
+
+sources:
+  active_plans:
+    path: docs/exec-plans/active/
+    max_items: 20
+  completed_plans:
+    path: docs/exec-plans/completed/
+    max_items: 5
+    sort: last_modified_desc
+  tech_debt:
+    path: docs/exec-plans/tech-debt-tracker.md
+  adr_exceptions:
+    path: docs/decisions/ADR-exceptions/
+  scorecard:
+    path: .harness/scorecard.yml
+  autonomy:
+    path: .harness/autonomy.yml
+  gates:
+    path: .harness/gates.yml
+  runtime:
+    path: .harness/runtime.yml
+
+sections:
+  - current_state
+  - active_plans
+  - recently_completed_plans
+  - open_tech_debts
+  - failing_gates
+  - active_adr_exceptions
+  - recent_incidents
+  - current_runtime_surface
+  - integration_status
+  - next_recommended_actions
+
+update_trigger:
+  - on_plan_change
+  - on_gate_failure
+  - on_session_start
+  - manual

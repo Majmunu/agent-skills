@@ -1,0 +1,19 @@
+{
+  "name": "nested-project-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nested project fixture - outer root",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^1.10.0",
+    "typescript": "^5.0.0"
+  }
+}

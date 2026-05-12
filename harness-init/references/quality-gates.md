@@ -6,7 +6,7 @@
 
 ## Canonical Script Root
 
-唯一实现入口：`.harness/scripts/`
+唯一实现入口：`scripts/harness/`
 
 必备脚本：
 - `check-all.sh`
@@ -64,10 +64,10 @@ legacy 根脚本仅允许 wrapper。
 
 ## Plan Scope Isolation
 
-- single-project / nested-project: plan path under `.harness/docs/exec-plans/*`
+- single-project / nested-project: plan path under `docs/exec-plans/*`
 - multi-project:
-  - root `.harness/docs/exec-plans/*` for cross-project/repository plans
-  - `<project>/.harness/docs/exec-plans/*` for project-scoped plans
+  - root `docs/exec-plans/*` for cross-project/repository plans
+  - `<project>/docs/exec-plans/*` for project-scoped plans
 
 plan-required gate must validate both path forms and enforce scope matching.
 
@@ -100,7 +100,7 @@ CI 至少可判定：
 ## Wrapper Integrity Rule
 
 wrapper 必须满足：
-- call canonical script under `.harness/scripts/`
+- call canonical script under `scripts/harness/`
 - no duplicated logic
 - argument passthrough (`"$@"`)
 - exit code passthrough (`exec`)
@@ -124,7 +124,7 @@ legacy 文档必须是 alias 模板，不得包含治理正文。出现以下情
 
 ## Minimal Gate Aggregator
 
-`.harness/scripts/check-all.sh` 应串行汇总 gate 结果并输出 PASS/FAIL 汇总，至少包含：
+`scripts/harness/check-all.sh` 应串行汇总 gate 结果并输出 PASS/FAIL 汇总，至少包含：
 - structure acceptance
 - plan gate acceptance
 - CI track config acceptance
@@ -156,5 +156,5 @@ legacy 文档必须是 alias 模板，不得包含治理正文。出现以下情
 
 为避免 bootstrap 放水关键门禁：
 - `bootstrap-observe`: 运行非关键检查，可设为 non-blocking
-- `critical-gates`: 仅运行 `.harness/scripts/check-critical.sh`，覆盖 placeholder-angle/expired-ADR + 必需 plan/alias/wrapper integrity，必须 blocking
+- `critical-gates`: 仅运行 `scripts/harness/check-critical.sh`，覆盖 placeholder-angle/expired-ADR + 必需 plan/alias/wrapper integrity，必须 blocking
 - `security/auth/data-migration`：当改动范围或 PR label 命中对应域时，必须启用对应 gate；未命中时脚本缺失可 warning

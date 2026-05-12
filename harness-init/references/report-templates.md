@@ -20,8 +20,8 @@
 
 ## Canonical Policy
 
-- Canonical docs root: `.harness/docs/`
-- Canonical script root: `.harness/scripts/`
+- Canonical docs root: `docs/`
+- Canonical script root: `scripts/harness/`
 - Legacy policy: compatibility alias / wrapper only
 
 ## Detected Project Roots
@@ -80,8 +80,8 @@
 ## Init Report Output
 
 默认输出路径：
-- `single-project` / `nested-project`：`.harness/docs/init-report.md`
-- `multi-project`：`.harness/docs/init-report.md`
+- `single-project` / `nested-project`：`docs/harness-init-report.md`
+- `multi-project`：`docs/harness/init-report.md`
 
 模板：
 
@@ -100,15 +100,15 @@
 
 ## Canonical Documents
 
-- `.harness/docs/architecture-boundaries.md`
-- `.harness/docs/ci-governance.md`
-- `.harness/docs/agent-autonomy.md`
-- `.harness/docs/observability.md`
-- `.harness/docs/feedback-loops.md`
-- `.harness/docs/entropy-gc.md`
-- `.harness/docs/exec-plans/active/`
-- `.harness/docs/exec-plans/completed/`
-- `.harness/docs/exec-plans/tech-debt-tracker.md`
+- `docs/architecture-boundaries.md`
+- `docs/ci-governance.md`
+- `docs/agent-autonomy.md`
+- `docs/observability.md`
+- `docs/feedback-loops.md`
+- `docs/entropy-gc.md`
+- `docs/exec-plans/active/`
+- `docs/exec-plans/completed/`
+- `docs/exec-plans/tech-debt-tracker.md`
 
 ## Created Files
 

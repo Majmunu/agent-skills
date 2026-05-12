@@ -1,0 +1,14 @@
+# Development process artifacts
+.kiro/specs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Temp
+*.tmp
+*.bak

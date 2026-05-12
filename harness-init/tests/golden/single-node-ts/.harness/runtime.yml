@@ -1,0 +1,16 @@
+version: 1
+runtime:
+  dev:
+    command: "npm run dev"
+    url: "http://localhost:3000"
+    health_check: "curl -sf http://localhost:3000/health"
+  checks:
+    lint: "npm run lint"
+    test: "npm test"
+    typecheck: "npx tsc --noEmit"
+    build: "npm run build"
+  logs:
+    local_path: "logs/"
+  ui:
+    provider: "not-configured"
+    base_url: "TODO: 待补充"

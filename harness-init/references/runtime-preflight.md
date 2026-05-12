@@ -80,8 +80,8 @@ function Test-Cmd([string]$Name) {
 
 | Task | POSIX | PowerShell |
 |---|---|---|
-| run boundary gate | `bash .harness/scripts/check-boundaries.sh` | `pwsh -File .harness/scripts/check-boundaries.ps1` |
-| run validate gate | `bash .harness/scripts/validate.sh` | `pwsh -File .harness/scripts/validate.ps1` |
+| run boundary gate | `bash scripts/harness/check-boundaries.sh` | `pwsh -File scripts/harness/check-boundaries.ps1` |
+| run validate gate | `bash scripts/harness/validate.sh` | `pwsh -File scripts/harness/validate.ps1` |
 | grep text | `grep -R` | `Select-String` |
 | list files | `find` | `Get-ChildItem -Recurse` |
 | command exists | `command -v` | `Get-Command` |

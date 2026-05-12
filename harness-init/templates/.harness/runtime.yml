@@ -1,0 +1,37 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+# Scope: root
+#
+# Runtime Surface Configuration
+# 定义目标项目的运行面：dev server、health check、检查命令、日志路径和 UI provider。
+# 智能体通过此文件了解如何启动、验证和操作目标项目。
+#
+# 使用说明：
+#   - 将 "TODO: 待补充" 替换为项目实际值
+#   - ui.provider 默认为 not-configured，配置后启用 UI 验证能力
+#   - 所有命令应可在项目根目录直接执行
+
+version: 1
+
+runtime:
+  # 开发服务器配置
+  dev:
+    command: "TODO: 待补充"                    # 启动 dev server 的命令，例如 "npm run dev"
+    url: "TODO: 待补充"                        # dev server 访问地址，例如 "http://localhost:3000"
+    health_check: "TODO: 待补充"               # 健康检查命令，例如 "curl -sf http://localhost:3000/health"
+
+  # 检查命令配置
+  checks:
+    lint: "TODO: 待补充"                       # lint 命令，例如 "npm run lint"
+    test: "TODO: 待补充"                       # 测试命令，例如 "npm test"
+    typecheck: "TODO: 待补充"                  # 类型检查命令，例如 "npx tsc --noEmit"
+    build: "TODO: 待补充"                      # 构建命令，例如 "npm run build"
+
+  # 日志配置
+  logs:
+    local_path: "TODO: 待补充"                 # 本地日志目录，例如 "logs/"
+
+  # UI 验证配置
+  ui:
+    provider: "not-configured"                 # playwright | chrome-devtools-mcp | not-configured
+    base_url: "TODO: 待补充"                   # UI 基础 URL，例如 "http://localhost:3000"

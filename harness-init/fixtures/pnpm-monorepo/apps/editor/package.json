@@ -1,0 +1,21 @@
+{
+  "name": "@monorepo/editor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Editor application in pnpm monorepo",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@monorepo/ui": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

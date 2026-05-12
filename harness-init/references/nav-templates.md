@@ -44,41 +44,52 @@ Only include commands that apply to the whole repository.
 ## Harness Operating System
 
 Canonical docs:
-- Architecture Boundaries: `.harness/docs/architecture-boundaries.md`
-- CI Governance: `.harness/docs/ci-governance.md`
-- Agent Autonomy: `.harness/docs/agent-autonomy.md`
-- Observability: `.harness/docs/observability.md`
-- Feedback Loops: `.harness/docs/feedback-loops.md`
-- Entropy & GC: `.harness/docs/entropy-gc.md`
-- Execution Plans: `.harness/docs/exec-plans/`
+- Architecture Boundaries: `docs/architecture-boundaries.md`
+- CI Governance: `docs/ci-governance.md`
+- Agent Autonomy: `docs/agent-autonomy.md`
+- Observability: `docs/observability.md`
+- Feedback Loops: `docs/feedback-loops.md`
+- Entropy & GC: `docs/entropy-gc.md`
+- Harness Engineering Guide: `docs/harness/harness-engineering.md`
+- Execution Plans: `docs/exec-plans/`
   - root scope: cross-project / repository-level plans
-  - project scope: `<project>/.harness/docs/exec-plans/`
+  - project scope: `<project>/docs/exec-plans/`
 
 Canonical script root:
-- `.harness/scripts/`
+- `scripts/harness/`
 
 Before medium/large work:
 1. create or update execution plan:
-   - project-scoped work: `<project>/.harness/docs/exec-plans/active/`
-   - cross-project/repository work: `.harness/docs/exec-plans/active/`
-2. fill the plan's Context Package: required docs, relevant patterns, affected surfaces, validation chain, learning backfill
-3. validate architecture boundaries
-4. run harness checks
-5. update feedback/entropy docs when needed
+   - project-scoped work: `<project>/docs/exec-plans/active/`
+   - cross-project/repository work: `docs/exec-plans/active/`
+2. validate architecture boundaries
+3. run harness checks
+4. update feedback/entropy docs when needed
+
+## Fixed Record Tags
+
+Use the following tags in every plan update, delivery summary, and PR description:
+
+- `[REQ]`
+- `[RULE]`
+- `[EVIDENCE]`
+- `[RISK]`
+- `[VERIFY]`
+- `[GATE]`
 
 ## Shared Constraints
 
 - Root docs are repository-wide facts only.
 - Project docs are project-specific facts only.
 - Cross-module changes must link an execution plan in scope-correct path:
-  - cross-project/repository work: `.harness/docs/exec-plans/*`
-  - project-scoped work: `<project>/.harness/docs/exec-plans/*`
-- Fresh init does not generate legacy docs/scripts outside `.harness/`.
+  - cross-project/repository work: `docs/exec-plans/*`
+  - project-scoped work: `<project>/docs/exec-plans/*`
+- Legacy docs/scripts are compatibility alias/wrapper only.
 - If the same failure happens twice, harden it into test/constraint/convention/ADR/check.
 
 ## Gate Policy
 
-- bootstrap and enforced tracks are governed by `.harness/docs/ci-governance.md`
+- bootstrap and enforced tracks are governed by `docs/ci-governance.md`
 - security/auth/data-migration checks are blocking when matching scope/labels are touched, unless ADR exception exists and is not expired
 
 ## Engineering Workflow
@@ -112,13 +123,14 @@ Generated/Updated by: harness-init
 
 ## Navigation
 
-- Architecture Boundaries: `.harness/docs/architecture-boundaries.md`
-- Constraints: `.harness/docs/constraints.md`
-- Testing: `.harness/docs/testing.md`
-- Observability: `.harness/docs/observability.md`
-- Feedback Loops: `.harness/docs/feedback-loops.md`
-- Entropy & GC: `.harness/docs/entropy-gc.md`
-- Decisions: `.harness/docs/decisions/`
+- Architecture Boundaries: `docs/architecture-boundaries.md`
+- Constraints: `docs/constraints.md`
+- Testing: `docs/testing.md`
+- Observability: `docs/observability.md`
+- Feedback Loops: `docs/feedback-loops.md`
+- Entropy & GC: `docs/entropy-gc.md`
+- Decisions: `docs/decisions/`
+- Harness Engineering Guide: `<repo-root>/docs/harness/harness-engineering.md`
 
 ## Commands
 
@@ -130,22 +142,22 @@ Run from repository root:
 - Type-check: `<type-check command>`
 - Test: `<test command>`
 - Build: `<build command>`
-- Boundary check (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash .harness/scripts/check-boundaries.sh`
-- Boundary check (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File .harness/scripts/check-boundaries.ps1`
-- Validate (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash .harness/scripts/validate.sh`
-- Validate (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File .harness/scripts/validate.ps1`
-- Regression (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash .harness/scripts/regression.sh`
-- Regression (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File .harness/scripts/regression.ps1`
-- Pre-release (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash .harness/scripts/pre-release.sh`
-- Pre-release (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File .harness/scripts/pre-release.ps1`
+- Boundary check (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash scripts/harness/check-boundaries.sh`
+- Boundary check (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File scripts/harness/check-boundaries.ps1`
+- Validate (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash scripts/harness/validate.sh`
+- Validate (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File scripts/harness/validate.ps1`
+- Regression (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash scripts/harness/regression.sh`
+- Regression (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File scripts/harness/regression.ps1`
+- Pre-release (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash scripts/harness/pre-release.sh`
+- Pre-release (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File scripts/harness/pre-release.ps1`
 
 ## Runtime Context
 
 - Health: `<health check command or URL>`
-- Logs query (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash .harness/scripts/query-logs.sh`
-- Logs query (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File .harness/scripts/query-logs.ps1`
-- Metrics query (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash .harness/scripts/query-metrics.sh`
-- Metrics query (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File .harness/scripts/query-metrics.ps1`
+- Logs query (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash scripts/harness/query-logs.sh`
+- Logs query (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File scripts/harness/query-logs.ps1`
+- Metrics query (POSIX): `HARNESS_TARGET_SCOPE=<project-path> bash scripts/harness/query-metrics.sh`
+- Metrics query (PowerShell): `$env:HARNESS_TARGET_SCOPE='<project-path>'; pwsh -File scripts/harness/query-metrics.ps1`
 
 ## Hard Constraints
 
@@ -158,9 +170,14 @@ Run from repository root:
 ## Planning Rule
 
 Medium/large tasks must have an execution plan before implementation:
-- `<project-path>/.harness/docs/exec-plans/active/<date-topic>.md`
+- `<project-path>/docs/exec-plans/active/<date-topic>.md`
 
 Cross-module changes must link a plan in PR description.
+
+## Fixed Record Tags
+
+All stage updates and delivery notes must include:
+- `[REQ]` `[RULE]` `[EVIDENCE]` `[RISK]` `[VERIFY]` `[GATE]`
 <!-- harness-init:end project-nav <project-path> version=2 -->
 ```
 
@@ -184,29 +201,29 @@ Generated/Updated by: harness-init
 ## Harness Operating System
 
 Canonical docs:
-- Architecture Boundaries: `.harness/docs/architecture-boundaries.md`
-- CI Governance: `.harness/docs/ci-governance.md`
-- Agent Autonomy: `.harness/docs/agent-autonomy.md`
-- Observability: `.harness/docs/observability.md`
-- Feedback Loops: `.harness/docs/feedback-loops.md`
-- Entropy & GC: `.harness/docs/entropy-gc.md`
-- Execution Plans: `.harness/docs/exec-plans/`
+- Architecture Boundaries: `docs/architecture-boundaries.md`
+- CI Governance: `docs/ci-governance.md`
+- Agent Autonomy: `docs/agent-autonomy.md`
+- Observability: `docs/observability.md`
+- Feedback Loops: `docs/feedback-loops.md`
+- Entropy & GC: `docs/entropy-gc.md`
+- Harness Engineering Guide: `docs/harness/harness-engineering.md`
+- Execution Plans: `docs/exec-plans/`
 
 Canonical scripts:
-- `.harness/scripts/check-all.sh`
-- `.harness/scripts/check-critical.sh`
-- `.harness/scripts/check-placeholders.sh`
-- `.harness/scripts/check-boundaries.sh`
-- `.harness/scripts/check-plan-required.sh`
-- `.harness/scripts/validate.sh`
-- `.harness/scripts/regression.sh`
+- `scripts/harness/check-all.sh`
+- `scripts/harness/check-critical.sh`
+- `scripts/harness/check-placeholders.sh`
+- `scripts/harness/check-boundaries.sh`
+- `scripts/harness/check-plan-required.sh`
+- `scripts/harness/validate.sh`
+- `scripts/harness/regression.sh`
 
 Before medium/large work:
 1. create/update execution plan
-2. fill the plan's Context Package
-3. run boundary checks
-4. run harness validation
-5. update feedback loop when repeated failures happen
+2. run boundary checks
+3. run harness validation
+4. update feedback loop when repeated failures happen
 
 ## Commands
 
@@ -221,14 +238,19 @@ Before medium/large work:
 
 - Health: `<health check command or URL>`
 - CI: `<CI provider link>`
-- Logs query: `.harness/scripts/query-logs.sh`
-- Metrics query: `.harness/scripts/query-metrics.sh`
+- Logs query: `scripts/harness/query-logs.sh`
+- Metrics query: `scripts/harness/query-metrics.sh`
 
 ## Working Rules
 
 - Canonical docs are source of truth.
 - Legacy docs/scripts are alias/wrapper only.
 - If same failure repeats twice, harden into test/constraint/convention/ADR/check.
+
+## Fixed Record Tags
+
+Use tags in every plan update and delivery summary:
+- `[REQ]` `[RULE]` `[EVIDENCE]` `[RISK]` `[VERIFY]` `[GATE]`
 <!-- harness-init:end root-nav version=2 -->
 ```
 

@@ -6,7 +6,7 @@
 
 ## Required Document
 
-canonical 文件：`.harness/docs/observability.md`
+canonical 文件：`docs/observability.md`
 
 ---
 
@@ -24,14 +24,14 @@ canonical 文件：`.harness/docs/observability.md`
 ## Canonical Script Entry
 
 必须使用：
-- `.harness/scripts/query-logs.sh`
-- `.harness/scripts/query-metrics.sh`
+- `scripts/harness/query-logs.sh`
+- `scripts/harness/query-metrics.sh`
 
 可选补充：
-- `.harness/scripts/reproduce.sh`
-- `.harness/scripts/validate.sh`
-- `.harness/scripts/regression.sh`
-- `.harness/scripts/pre-release.sh`
+- `scripts/harness/reproduce.sh`
+- `scripts/harness/validate.sh`
+- `scripts/harness/regression.sh`
+- `scripts/harness/pre-release.sh`
 
 ---
 
@@ -53,7 +53,7 @@ set -euo pipefail
 
 if [ -z "${LOG_BACKEND:-}" ]; then
   echo "ERROR: LOG_BACKEND is not configured"
-  echo "Set LOG_BACKEND and implement provider query in .harness/scripts/query-logs.sh"
+  echo "Set LOG_BACKEND and implement provider query in scripts/harness/query-logs.sh"
   exit 2
 fi
 
@@ -69,7 +69,7 @@ set -euo pipefail
 
 if [ -z "${METRICS_BACKEND:-}" ]; then
   echo "ERROR: METRICS_BACKEND is not configured"
-  echo "Set METRICS_BACKEND and implement provider query in .harness/scripts/query-metrics.sh"
+  echo "Set METRICS_BACKEND and implement provider query in scripts/harness/query-metrics.sh"
   exit 2
 fi
 

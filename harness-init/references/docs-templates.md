@@ -1,6 +1,6 @@
 # Documentation Templates
 
-加载时机：**Step 3 创建 `.harness/docs/` 骨架时**读取本文件。
+加载时机：**Step 3 创建 docs/ 骨架时**读取本文件。
 
 ---
 
@@ -18,11 +18,33 @@
 ### Single-project
 
 ```txt
-.harness/
+docs/
+├── architecture-boundaries.md
+├── constraints.md
+├── testing.md
+├── ci-governance.md
+├── agent-autonomy.md
+├── observability.md
+├── feedback-loops.md
+├── entropy-gc.md
+├── exec-plans/
+│   ├── active/
+│   ├── completed/
+│   └── tech-debt-tracker.md
+├── harness/
+│   ├── harness-engineering.md
+│   └── doc-gardening-report.md
+└── decisions/
+    └── ADR-0001-harness-init.md
+```
+
+### Multi-project
+
+```txt
+repo/
+├── AGENTS.md (or CLAUDE.md)
 ├── docs/
 │   ├── architecture-boundaries.md
-│   ├── constraints.md
-│   ├── testing.md
 │   ├── ci-governance.md
 │   ├── agent-autonomy.md
 │   ├── observability.md
@@ -32,35 +54,13 @@
 │   │   ├── active/
 │   │   ├── completed/
 │   │   └── tech-debt-tracker.md
-│   ├── doc-gardening-report.md
+│   ├── harness/
+│   │   ├── harness-engineering.md
+│   │   └── doc-gardening-report.md
 │   └── decisions/
-│       └── ADR-0001-harness-init.md
-└── scripts/
-```
-
-### Multi-project
-
-```txt
-repo/
-├── AGENTS.md (or CLAUDE.md)
-├── .harness/
-│   ├── docs/
-│   │   ├── architecture-boundaries.md
-│   │   ├── ci-governance.md
-│   │   ├── agent-autonomy.md
-│   │   ├── observability.md
-│   │   ├── feedback-loops.md
-│   │   ├── entropy-gc.md
-│   │   ├── exec-plans/
-│   │   │   ├── active/
-│   │   │   ├── completed/
-│   │   │   └── tech-debt-tracker.md
-│   │   ├── doc-gardening-report.md
-│   │   └── decisions/
-│   └── scripts/
 ├── apps/<name>/
 │   ├── AGENTS.md (or CLAUDE.md)
-│   └── .harness/docs/
+│   └── docs/
 │       ├── architecture-boundaries.md
 │       ├── constraints.md
 │       ├── testing.md
@@ -71,7 +71,7 @@ repo/
 │           ├── active/
 │           ├── completed/
 │           └── tech-debt-tracker.md
-└── packages/services/... (same local `.harness/docs/` shape)
+└── packages/services/... (same local docs shape)
 ```
 
 ---
@@ -79,14 +79,14 @@ repo/
 ## Plan Scope Policy
 
 - `single-project` / `nested-project`：
-  - use `.harness/docs/exec-plans/*`
+  - use `docs/exec-plans/*`
 - `multi-project`：
-  - root `.harness/docs/exec-plans/*` only for cross-project / repository-level plans
-  - `<project>/.harness/docs/exec-plans/*` for project-scoped plans
+  - root `docs/exec-plans/*` only for cross-project / repository-level plans
+  - `<project>/docs/exec-plans/*` for project-scoped plans
 
 Plan gate must accept both styles:
-- `.harness/docs/exec-plans/active/<plan>.md`
-- `<project>/.harness/docs/exec-plans/active/<plan>.md`
+- `docs/exec-plans/active/<plan>.md`
+- `<project>/docs/exec-plans/active/<plan>.md`
 
 ---
 
@@ -94,12 +94,12 @@ Plan gate must accept both styles:
 
 | Legacy Path | Canonical Path | Strategy |
 |---|---|---|
-| `docs/autonomy-levels.md` | `.harness/docs/agent-autonomy.md` | keep alias only when migrating |
-| `docs/boundaries.md` | `.harness/docs/architecture-boundaries.md` | keep alias only when migrating |
-| `docs/architecture-rules.md` | `.harness/docs/architecture-boundaries.md` | keep alias only when migrating |
-| `docs/ci.md` | `.harness/docs/ci-governance.md` | keep alias only when migrating |
-| `docs/runtime-observability.md` | `.harness/docs/observability.md` | keep alias only when migrating |
-| `docs/plans/` | `.harness/docs/exec-plans/` | migrate/alias with no duplicated facts |
+| `docs/autonomy-levels.md` | `docs/agent-autonomy.md` | keep alias only |
+| `docs/boundaries.md` | `docs/architecture-boundaries.md` | keep alias only |
+| `docs/architecture-rules.md` | `docs/architecture-boundaries.md` | keep alias only |
+| `docs/ci.md` | `docs/ci-governance.md` | keep alias only |
+| `docs/runtime-observability.md` | `docs/observability.md` | keep alias only |
+| `docs/plans/` | `docs/exec-plans/` | migrate/alias with no duplicated facts |
 
 ---
 
@@ -114,7 +114,7 @@ This file is kept for backward compatibility.
 
 Canonical source of truth:
 
-- `.harness/docs/<canonical-file>.md`
+- `docs/<canonical-file>.md`
 
 Do not update this file with new rules.
 Update the canonical file instead.
@@ -144,13 +144,13 @@ Update the canonical file instead.
 
 ## Boundary Checks
 
-- `.harness/scripts/check-boundaries.sh`
+- `scripts/harness/check-boundaries.sh`
 - `<stack-specific architecture checker command>`
 
 ## ADR Exceptions
 
 Any boundary exception must link:
-- `.harness/docs/decisions/ADR-exceptions/<id>.md`
+- `docs/decisions/ADR-exceptions/<id>.md`
 ```
 
 ---
@@ -234,8 +234,47 @@ Any boundary exception must link:
 
 ## Canonical Scripts
 
-- `.harness/scripts/query-logs.sh`
-- `.harness/scripts/query-metrics.sh`
+- `scripts/harness/query-logs.sh`
+- `scripts/harness/query-metrics.sh`
+```
+
+---
+
+## harness/harness-engineering.md
+
+```md
+# Harness Engineering Guide
+
+## Goal
+
+Standardize implementation-phase execution so delivery is traceable, verifiable, and auditable.
+
+## Required Outputs
+
+Each implementation must include:
+
+1. Structured reasoning
+2. Execution trace
+3. Patch record
+4. User-visible plan
+5. Programmatic verification
+
+## Fixed Record Tags
+
+Use these tags in every plan update, delivery summary, and PR description:
+
+- `[REQ]`
+- `[RULE]`
+- `[EVIDENCE]`
+- `[RISK]`
+- `[VERIFY]`
+- `[GATE]`
+
+## Tag Usage Rules
+
+1. Every stage update must include all six tags at least once.
+2. Tag content must reference real files/commands/results.
+3. If a check is not run, use explicit `skipped + reason`.
 ```
 
 ---
@@ -255,10 +294,10 @@ Any boundary exception must link:
 
 ## Enforced By
 
-- `.harness/scripts/check-boundaries.sh`
-- `.harness/scripts/check-naming.sh`
-- `.harness/scripts/check-file-size.sh`
-- `.harness/scripts/check-logging.sh`
+- `scripts/harness/check-boundaries.sh`
+- `scripts/harness/check-naming.sh`
+- `scripts/harness/check-file-size.sh`
+- `scripts/harness/check-logging.sh`
 ```
 
 ---
@@ -272,8 +311,8 @@ Any boundary exception must link:
 
 - unit: `<unit test command>`
 - integration: `<integration test command>`
-- regression: `.harness/scripts/regression.sh`
-- full validate: `.harness/scripts/validate.sh`
+- regression: `scripts/harness/regression.sh`
+- full validate: `scripts/harness/validate.sh`
 
 ## Required Acceptance
 
@@ -303,19 +342,6 @@ If the same class of failure appears twice, harden it into at least one:
 - execution plan checklist item
 
 ## Required Fields
-
-### Learning Backfill Rule
-
-Before closing a task, decide whether a stable lesson should be written back to harness docs. Write only reusable, auditable facts.
-
-Targets:
-- new boundary rule: `.harness/docs/architecture-boundaries.md`
-- new engineering constraint: `.harness/docs/constraints.md`
-- new validation requirement: `.harness/docs/testing.md` or harness scripts
-- repeated failure: `.harness/docs/feedback-loops.md`
-- stale/duplicate/obsolete governance: `.harness/docs/entropy-gc.md`
-
-If there is nothing to backfill, report `Learning Backfill: none`.
 
 ### Failure Pattern
 ### First Occurrence
@@ -362,11 +388,20 @@ If there is nothing to backfill, report `Learning Backfill: none`.
 
 All medium/large tasks must have an execution plan here before implementation.
 
-In multi-project repositories:
-- root `.harness/docs/exec-plans/active/` is for cross-project/repository plans
-- project-level plans belong to `<project>/.harness/docs/exec-plans/active/`
+## Fixed Record Tags
 
-Each execution plan should include a lightweight Context Package that lists required docs, relevant patterns, affected surfaces, validation chain, and learning backfill target.
+Every stage update and delivery note must include:
+
+- `[REQ]`
+- `[RULE]`
+- `[EVIDENCE]`
+- `[RISK]`
+- `[VERIFY]`
+- `[GATE]`
+
+In multi-project repositories:
+- root `docs/exec-plans/active/` is for cross-project/repository plans
+- project-level plans belong to `<project>/docs/exec-plans/active/`
 ```
 
 ## exec-plans/completed/README.md
@@ -374,7 +409,7 @@ Each execution plan should include a lightweight Context Package that lists requ
 ```md
 # Completed Execution Plans
 
-Move finished plans from `.harness/docs/exec-plans/active/` to this directory.
+Move finished plans from `docs/exec-plans/active/` to this directory.
 ```
 
 ## exec-plans/tech-debt-tracker.md

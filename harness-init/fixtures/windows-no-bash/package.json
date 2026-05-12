@@ -1,0 +1,20 @@
+{
+  "name": "windows-no-bash-fixture",
+  "version": "1.0.0",
+  "description": "Fixture simulating Windows environment without bash - PowerShell only",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "test": "jest",
+    "lint": "eslint src/",
+    "harness:check": "pwsh scripts/harness-pwsh/self-test.ps1"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0"
+  }
+}

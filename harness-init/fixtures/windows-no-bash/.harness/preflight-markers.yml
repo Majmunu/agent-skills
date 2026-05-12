@@ -1,0 +1,38 @@
+# Preflight environment markers for Windows-only testing
+# These markers indicate the runtime constraints for this fixture
+
+version: 1
+environment:
+  os: windows
+  shell_primary: powershell
+  shell_fallback: null
+  bash_available: false
+  git_bash_available: false
+  wsl_available: false
+  pwsh_version: "7.4"
+
+constraints:
+  - id: no-bash
+    description: "Bash shell is not available in this environment"
+    impact: "All bash harness scripts will output not-run"
+    fallback: "Use PowerShell scripts in scripts/harness-pwsh/"
+  - id: no-wsl
+    description: "Windows Subsystem for Linux is not installed"
+    impact: "Cannot use WSL as bash fallback"
+    fallback: "Use native PowerShell scripts"
+  - id: path-separator
+    description: "Path separator is backslash"
+    impact: "Scripts must handle Windows path conventions"
+    fallback: "Use [System.IO.Path]::Combine() in PowerShell"
+
+degraded_mode:
+  active: true
+  reason: "bash runtime not available"
+  available_scripts:
+    - scripts/harness-pwsh/self-test.ps1
+    - scripts/harness-pwsh/score-quality.ps1
+    - scripts/harness-pwsh/update-context-snapshot.ps1
+    - scripts/harness-pwsh/check-secrets.ps1
+    - scripts/harness-pwsh/check-permissions.ps1
+  unavailable_scripts:
+    - scripts/harness/*.sh

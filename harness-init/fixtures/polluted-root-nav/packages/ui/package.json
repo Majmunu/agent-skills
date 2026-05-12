@@ -1,0 +1,8 @@
+{
+  "name": "@polluted/ui",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsup",
+    "storybook": "storybook dev -p 6006"
+  }
+}

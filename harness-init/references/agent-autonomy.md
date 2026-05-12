@@ -6,7 +6,7 @@
 
 ## Required Document
 
-canonical 文件：`.harness/docs/agent-autonomy.md`
+canonical 文件：`docs/agent-autonomy.md`
 
 ---
 

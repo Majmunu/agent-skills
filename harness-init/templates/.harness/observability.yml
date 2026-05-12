@@ -1,0 +1,61 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+# Scope: root
+#
+# Observability configuration for agent-readable log/metric/trace queries.
+# Scripts in scripts/harness/query-*.sh read this file to determine providers and endpoints.
+
+version: 1
+
+# --- Logs ---
+# Supported providers: file | loki | victoria-logs | elastic | not-configured
+logs:
+  provider: file
+  # Local log path used when provider is "file" (grep/rg search)
+  local_path: "logs/"
+  # Environment variable holding the remote endpoint URL
+  # Used by loki, victoria-logs, elastic providers
+  endpoint_env: LOGS_ENDPOINT
+  # Remote endpoint (read from env var at runtime)
+  # Example values:
+  #   loki: http://loki.internal:3100
+  #   victoria-logs: http://vlogs.internal:9428
+  #   elastic: http://elasticsearch.internal:9200
+  endpoint: "TODO: 待补充"
+
+# --- Metrics ---
+# Supported providers: prometheus | victoria-metrics | not-configured
+metrics:
+  provider: not-configured
+  # Environment variable holding the remote endpoint URL
+  endpoint_env: METRICS_ENDPOINT
+  # Remote endpoint (read from env var at runtime)
+  # Example values:
+  #   prometheus: http://prometheus.internal:9090
+  #   victoria-metrics: http://vmselect.internal:8481
+  endpoint: "TODO: 待补充"
+  # Default PromQL query timeout (seconds)
+  query_timeout: 30
+
+# --- Traces ---
+# Supported providers: tempo | jaeger | otel | not-configured
+traces:
+  provider: not-configured
+  # Environment variable holding the remote endpoint URL
+  endpoint_env: TRACES_ENDPOINT
+  # Remote endpoint (read from env var at runtime)
+  # Example values:
+  #   tempo: http://tempo.internal:3200
+  #   jaeger: http://jaeger.internal:16686
+  #   otel: http://otel-collector.internal:4317
+  endpoint: "TODO: 待补充"
+
+# --- SLO (Service Level Objectives) ---
+# Define target SLOs for automated quality checks and alerting.
+slo:
+  # Target availability percentage (e.g., "99.9%")
+  availability: "TODO: 待补充"
+  # Target 95th percentile latency (e.g., "200ms")
+  latency_p95: "TODO: 待补充"
+  # Target error rate threshold (e.g., "0.1%")
+  error_rate: "TODO: 待补充"

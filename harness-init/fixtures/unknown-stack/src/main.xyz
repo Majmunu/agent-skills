@@ -1,0 +1,9 @@
+// This is a file in an unrecognizable language/stack
+// harness-init should handle this gracefully with degraded detection
+
+module Main where
+
+entry :: IO ()
+entry = do
+  putStrLn "Unknown stack fixture"
+  runServer 8080

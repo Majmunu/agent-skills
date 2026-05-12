@@ -1,0 +1,130 @@
+# Subagent Routing Rules
+# Defines which roles are required for review based on changed paths and PR labels.
+# Consistent with subagents/roles.json role definitions.
+#
+# Role ID mapping (from roles.json):
+#   architect                    → 系统架构负责人
+#   editor-component             → 编辑器与组件生态负责人 (editor_component_specialist)
+#   runtime-dataflow             → 运行时引擎负责人 (runtime_dataflow_engineer)
+#   quality-gate                 → 质量门禁负责人 (quality_gate_reviewer)
+#   governance-context           → 项目治理与上下文同步负责人 (governance_context_sync_lead)
+#
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+# Scope: root
+
+version: 1
+
+routes:
+  # --- Path-based routing ---
+
+  # Editor and component changes require editor specialist + quality review
+  - when:
+      changed_paths:
+        - "apps/editor/**"
+        - "packages/components/**"
+    require_roles:
+      - editor-component
+      - quality-gate
+    blocking: false
+
+  # Runtime and schema changes require runtime engineer + architect + quality review
+  - when:
+      changed_paths:
+        - "packages/runtime/**"
+        - "packages/schema/**"
+    require_roles:
+      - runtime-dataflow
+      - architect
+      - quality-gate
+    blocking: false
+
+  # Architecture boundary and core config changes require architect review
+  - when:
+      changed_paths:
+        - "docs/architecture-boundaries.md"
+        - "docs/decisions/**"
+        - ".harness/**"
+    require_roles:
+      - architect
+      - governance-context
+    blocking: false
+
+  # Harness governance and exec-plan changes require governance lead
+  - when:
+      changed_paths:
+        - "docs/exec-plans/**"
+        - "docs/harness/**"
+        - "tech-debt-tracker.md"
+        - "docs/feedback-loops.md"
+        - "docs/entropy-gc.md"
+    require_roles:
+      - governance-context
+    blocking: false
+
+  # Gate and CI changes require quality gate reviewer
+  - when:
+      changed_paths:
+        - "scripts/harness/**"
+        - ".github/workflows/**"
+        - ".gitlab-ci/**"
+    require_roles:
+      - quality-gate
+      - governance-context
+    blocking: false
+
+  # --- Label-based routing ---
+
+  # Security-related changes are blocking — all critical roles must review
+  - when:
+      labels:
+        - security
+        - auth
+        - data-migration
+    require_roles:
+      - architect
+      - quality-gate
+      - governance-context
+    blocking: true
+
+  # Schema version changes are blocking — require architect and runtime review
+  - when:
+      labels:
+        - schema-breaking-change
+        - dsl-migration
+    require_roles:
+      - architect
+      - runtime-dataflow
+      - quality-gate
+    blocking: true
+
+  # Performance-related changes require runtime engineer review
+  - when:
+      labels:
+        - performance
+        - optimization
+    require_roles:
+      - runtime-dataflow
+      - quality-gate
+    blocking: false
+
+  # Architecture decision changes are blocking
+  - when:
+      labels:
+        - architecture-change
+        - new-module
+    require_roles:
+      - architect
+      - quality-gate
+      - governance-context
+    blocking: true
+
+  # Release workflow requires governance and quality sign-off
+  - when:
+      labels:
+        - release
+        - hotfix
+    require_roles:
+      - quality-gate
+      - governance-context
+    blocking: true

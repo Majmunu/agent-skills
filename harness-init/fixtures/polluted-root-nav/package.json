@@ -1,0 +1,15 @@
+{
+  "name": "polluted-root-nav-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fixture with intentionally polluted root AGENTS.md",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test"
+  }
+}

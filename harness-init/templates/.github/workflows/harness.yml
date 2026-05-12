@@ -1,0 +1,85 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+# Scope: root
+name: Harness Quality Gates
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master]
+
+env:
+  HARNESS_CI_MODE: ${{ vars.HARNESS_CI_MODE || 'bootstrap' }}
+
+jobs:
+  harness-critical:
+    name: Critical Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write PR body
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p .harness
+          echo "${{ github.event.pull_request.body }}" > .harness/pr-body.txt
+      - name: Run critical gates
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          PR_BODY_FILE: .harness/pr-body.txt
+        run: |
+          bash scripts/harness/check-critical.sh
+      - name: Check secrets
+        run: bash scripts/harness/check-secrets.sh
+      - name: Check permissions
+        run: bash scripts/harness/check-permissions.sh
+
+  harness-docs:
+    name: Documentation Gates
+    runs-on: ubuntu-latest
+    if: env.HARNESS_CI_MODE == 'enforced' || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check placeholders
+        run: bash scripts/harness/check-placeholders.sh
+      - name: Check alias integrity
+        run: bash scripts/harness/check-alias-integrity.sh
+      - name: Check wrapper integrity
+        run: bash scripts/harness/check-wrapper-integrity.sh
+    continue-on-error: ${{ env.HARNESS_CI_MODE == 'bootstrap' }}
+
+  harness-score:
+    name: Quality Score
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Calculate quality score
+        run: bash scripts/harness/score-quality.sh
+    continue-on-error: ${{ env.HARNESS_CI_MODE == 'bootstrap' }}
+
+  harness-security:
+    name: Security Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check secrets
+        run: bash scripts/harness/check-secrets.sh
+      - name: Check permissions
+        run: bash scripts/harness/check-permissions.sh
+      # Security gates never allow continue-on-error
+
+  harness-self-test:
+    name: Harness Self-Test
+    runs-on: ubuntu-latest
+    if: env.HARNESS_CI_MODE == 'enforced'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run fixture tests
+        run: bash tests/run-fixtures.sh
+      - name: Assert idempotency
+        run: bash tests/assert-idempotent.sh "${{ github.workspace }}"
+      - name: Assert root nav clean
+        run: bash tests/assert-root-nav-clean.sh "${{ github.workspace }}"
+      - name: Assert placeholder gate
+        run: bash tests/assert-placeholder-gate.sh "${{ github.workspace }}"
+    # In enforced mode, self-test failures block the pipeline

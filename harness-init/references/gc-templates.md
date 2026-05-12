@@ -188,7 +188,7 @@ jobs:
 
 ## Canonical Doc-gardening Checks
 
-建议 `.harness/scripts/doc-gardening.sh` 至少扫描：
+建议 `scripts/harness/doc-gardening.sh` 至少扫描：
 - stale active plans
 - TODO older than threshold
 - outdated compatibility aliases
@@ -205,7 +205,7 @@ jobs:
 #!/usr/bin/env bash
 set -euo pipefail
 
-report_path="${DOC_GARDENING_REPORT_PATH:-.harness/docs/doc-gardening-report.md}"
+report_path="${DOC_GARDENING_REPORT_PATH:-docs/harness/doc-gardening-report.md}"
 max_todo_days="${DOC_GARDENING_TODO_MAX_DAYS:-30}"
 
 echo "# Doc Gardening Report" > "$report_path"
@@ -225,7 +225,7 @@ echo "- TODO: implement ADR exception expiry scan" >> "$report_path"
 
 ## Entropy Compatibility Inventory Rule
 
-`.harness/docs/entropy-gc.md` 中每个 alias/wrapper 必须记录：
+`docs/entropy-gc.md` 中每个 alias/wrapper 必须记录：
 - canonical target
 - reason
 - owner

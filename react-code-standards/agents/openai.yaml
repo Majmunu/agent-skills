@@ -1,0 +1,11 @@
+interface:
+  display_name: "React Code Standards"
+  short_description: "React 18/19+ coding standards with project-local config detection and React Compiler support"
+  default_prompt: >
+    Apply React code standards: detect React version (18/19+) and React Compiler
+    presence separately ([R19] ≠ [COMPILER]). Read project-local toolchain configs
+    (tsconfig, ESLint, Prettier, Stylelint). Enforce naming, component design, hooks,
+    TypeScript, state management, data fetching, security, accessibility, testing,
+    and performance standards. Project-local configs always override built-in references.
+    Use structured review output format (environment → must fix → should fix → nice to have).
+    Run quality gate checks before delivery.

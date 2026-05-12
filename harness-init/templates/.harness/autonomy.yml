@@ -1,0 +1,51 @@
+# Harness Init Contract Version: v3
+# Generated/Updated by: harness-init
+version: 1
+
+# Agent autonomy level configuration
+# L1: Human approves every action
+# L2: Human approves plans, agent executes steps
+# L3: Agent executes autonomously, human reviews results
+# L4: Agent executes and merges, human monitors
+
+current_level: L1
+
+levels:
+  L1:
+    description: "Human approves every action"
+    approval_required: all
+    auto_merge: false
+    rollback: manual
+  L2:
+    description: "Human approves plans, agent executes steps"
+    approval_required: plans_and_dangerous_ops
+    auto_merge: false
+    rollback: manual
+  L3:
+    description: "Agent executes autonomously, human reviews results"
+    approval_required: dangerous_ops_only
+    auto_merge: false
+    rollback: automatic_on_gate_failure
+  L4:
+    description: "Agent executes and merges, human monitors"
+    approval_required: dangerous_ops_only
+    auto_merge: true
+    rollback: automatic_on_gate_failure
+
+promotion_criteria:
+  L1_to_L2:
+    quality_score_min: 60
+    days_stable: 7
+  L2_to_L3:
+    quality_score_min: 85
+    days_stable: 14
+    gate_failure_rate_max: 0.05
+  L3_to_L4:
+    quality_score_min: 92
+    days_stable: 30
+    gate_failure_rate_max: 0.02
+
+demotion_triggers:
+  - "security gate failure"
+  - "production incident caused by agent"
+  - "quality score drops below current level minimum"

@@ -464,5 +464,5 @@ Monorepo harness 策略：
    - Test: TODO: 待补充
    ```
 3. 仍然完整创建 docs/ 骨架和所有文档模板
-4. 跳过 tooling-templates 中的具体工具配置，在 `.harness/docs/constraints.md` 中标注“门禁配置待建立”
-5. 在 `.harness/docs/decisions/ADR-0001-harness-init.md` 记录“未知技术栈，待补充命令映射”
+4. 跳过 tooling-templates 中的具体工具配置，在 `docs/constraints.md` 中标注“门禁配置待建立”
+5. 在 `docs/decisions/ADR-0001-harness-init.md` 记录“未知技术栈，待补充命令映射”

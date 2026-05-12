@@ -534,9 +534,9 @@ echo "OK: root navigation files appear clean"
 
 ## Cross-module Plan Required Check（PR 门禁）
 
-用于强制执行：跨模块 PR 改动必须关联可验证的计划文件（root 或 project-scoped `.harness/docs/exec-plans/*`，非 PR 事件自动跳过）。
+用于强制执行：跨模块 PR 改动必须关联可验证的计划文件（root 或 project-scoped `docs/exec-plans/*`，非 PR 事件自动跳过）。
 
-canonical 脚本：`.harness/scripts/check-plan-required.sh`
+canonical 脚本：`scripts/harness/check-plan-required.sh`
 
 建议配置文件：`.harness/plan-required-rules.yml`
 - 可选字段：`allowed_plan_statuses`（默认 `active, completed`；用于 PR gate 合法状态）
@@ -684,7 +684,7 @@ if [ "$cfg_cross_project" = "true" ] && [ "$scope_count" -gt 1 ]; then requires_
 if [ "$changed_count" -gt "$cfg_changed_files_gt" ]; then requires_plan=1; fi
 if [ "$cfg_db_schema" = "true" ] && echo "$changed_files" | grep -Eq '(^|/)(schema|migrations?)/|\.sql$|\.ddl$'; then requires_plan=1; fi
 if [ "$cfg_ci_change" = "true" ] && echo "$changed_files" | grep -Eq '^\.github/workflows/|^\.gitlab-ci\.yml$|^lefthook\.yml$|^\.pre-commit-config\.yaml$'; then requires_plan=1; fi
-if [ "$cfg_boundary" = "true" ] && echo "$changed_files" | grep -Eq '(^|/)\.harness/scripts/check-boundaries\.sh$|(^|/)\.harness/docs/architecture-boundaries\.md$|(^|/)\.harness/'; then requires_plan=1; fi
+if [ "$cfg_boundary" = "true" ] && echo "$changed_files" | grep -Eq '^scripts/harness/check-boundaries\.sh$|^docs/architecture-boundaries\.md$|^\.harness/'; then requires_plan=1; fi
 if [ "$cfg_infra" = "true" ] && echo "$changed_files" | grep -Eq '^infra/|^infrastructure/|^deploy/|^k8s/|^helm/|Dockerfile|docker-compose'; then requires_plan=1; fi
 if [ -n "$cfg_labels_regex" ] && echo "$PR_LABELS" | grep -Eiq "(${cfg_labels_regex})"; then requires_plan=1; fi
 
@@ -698,7 +698,7 @@ if [ ! -f "$PR_BODY_FILE" ]; then
   exit 1
 fi
 
-plan_paths="$(grep -Eo '([[:alnum:]_.-]+/)*\.harness/docs/exec-plans/(active|completed)/[^ )]+' "$PR_BODY_FILE" | sed 's/[`\",]//g' | sort -u || true)"
+plan_paths="$(grep -Eo '([[:alnum:]_.-]+/)*docs/exec-plans/(active|completed)/[^ )]+' "$PR_BODY_FILE" | sed 's/[`\",]//g' | sort -u || true)"
 if [ -z "$plan_paths" ]; then
   echo "ERROR: plan required but no plan path found in PR body"
   exit 1
@@ -722,14 +722,14 @@ while IFS= read -r plan_path; do
 
   if [ "$required_plan_scope" = "project" ]; then
     case "$plan_path" in
-      "$primary_scope"/.harness/docs/exec-plans/active/*|"$primary_scope"/.harness/docs/exec-plans/completed/*)
+      "$primary_scope"/docs/exec-plans/active/*|"$primary_scope"/docs/exec-plans/completed/*)
         matched_path="$plan_path"
         break
         ;;
     esac
   else
     case "$plan_path" in
-      .harness/docs/exec-plans/active/*|.harness/docs/exec-plans/completed/*)
+      docs/exec-plans/active/*|docs/exec-plans/completed/*)
         matched_path="$plan_path"
         break
         ;;
@@ -742,9 +742,9 @@ EOF
 if [ -z "$matched_path" ]; then
   echo "ERROR: no valid plan path matches required scope (${required_plan_scope})"
   if [ "$required_plan_scope" = "project" ]; then
-    echo "Required example: ${primary_scope}/.harness/docs/exec-plans/active/<plan>.md"
+    echo "Required example: ${primary_scope}/docs/exec-plans/active/<plan>.md"
   else
-    echo "Required example: .harness/docs/exec-plans/active/<plan>.md"
+    echo "Required example: docs/exec-plans/active/<plan>.md"
   fi
   exit 1
 fi
@@ -756,7 +756,7 @@ echo "OK: plan gate passed ($matched_path, scope=${required_plan_scope})"
 
 ## Alias Integrity Check
 
-canonical 脚本：`.harness/scripts/check-alias-integrity.sh`
+canonical 脚本：`scripts/harness/check-alias-integrity.sh`
 
 规则：
 - legacy 文档（如 `docs/autonomy-levels.md`）必须是 alias 模板
@@ -767,17 +767,16 @@ canonical 脚本：`.harness/scripts/check-alias-integrity.sh`
 
 ## Wrapper Integrity Check
 
-fresh init 默认不生成 legacy 根脚本；repair/migration 时若必须短期兼容，wrapper 也只能指向 `.harness/scripts/*`：
+legacy 根脚本（如 `scripts/check-all.sh`）仅允许 wrapper：
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-exec "$(dirname "$0")/../.harness/scripts/check-all.sh" "$@"
+exec "$(dirname "$0")/harness/check-all.sh" "$@"
 ```
 
 校验点：
-- fresh init must leave no `scripts/check-all.sh` / `scripts/validate.sh` / `scripts/regression.sh`
-- temporary wrappers, if explicitly required during migration, must call canonical script in `.harness/scripts/`
+- must call canonical script in `scripts/harness/`
 - must passthrough arguments
 - must preserve exit code
 - must not contain implementation logic
