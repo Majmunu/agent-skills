@@ -51,6 +51,8 @@ import { connect, mapProps, observer } from '@formily/react'
 import type { typePropsBase } from '../type'
 import { useComponentStyles } from '../../workbench/PanelEditor/hooks/useComponentStyles'
 import { useComponentVariables } from '../../core'
+import { useVariableRef } from '../../core/variable/hooks'
+import type { VariableRef } from '../../core/variable'
 import { withCustomWrapper } from '../../hocs/withCustomWrapper'
 import { {Name}StyleSchema, {Name}InitialProps } from './style-api'
 import './{name}.module.scss'
@@ -59,6 +61,7 @@ import './{name}.module.scss'
 type typeProps = typePropsBase & Partial<{
   id: string
   // Component-specific static props (prefer variable system; these are fallbacks)
+  // titleVariableRef: VariableRef
   // loading: boolean
   // disabled: boolean
 }>
@@ -94,11 +97,20 @@ export const {Name}Component = observer(({ children, ...props }: typeProps) => {
   })
 
   // ===== 5. Component Variable System =====
+  // Component-owned variables: values declared by x-variable-schema and scoped to this node.
   const componentVars = useComponentVariables(id || '')
   // Priority: component variable > props static value
   // WARNING: variable name must match the 'name' field in x-variable-schema exactly
   // const isLoading = componentVars.loading !== undefined
   //   ? Boolean(componentVars.loading) : props.loading
+
+  // Property bindings selected from the right panel should use VariableRef.
+  // Example priority: variableRef > deprecated variableKey fallback > static value.
+  // const titleRef = finalAttributes.titleVariableRef as VariableRef | undefined
+  // const [titleValue] = useVariableRef<string>(titleRef)
+  // const title = titleRef?.variableId && titleValue !== undefined
+  //   ? String(titleValue)
+  //   : String(finalAttributes.title ?? '')
 
   // ===== 6. Merge Styles =====
   const mergedStyle: Record<string, unknown> = {
@@ -338,6 +350,43 @@ That Skill covers:
 }
 ```
 
+### Variable Binding Rules
+
+New bindable component properties must use `VariableRef` as the canonical storage shape:
+
+```ts
+type VariableRef = {
+  variableId: string
+  variableName: string
+  scope: 'global' | 'page' | 'component'
+  varType: 'string' | 'number' | 'boolean' | 'array' | 'object' | 'any'
+  path?: string
+}
+```
+
+Runtime priority:
+
+```ts
+const valueRef = attributes?.valueRef as VariableRef | undefined
+const [refValue] = useVariableRef(valueRef)
+const value = valueRef?.variableId && refValue !== undefined
+  ? refValue
+  : attributes?.value
+```
+
+Rules:
+
+| Scenario | Required pattern |
+|---|---|
+| Bind an existing editor variable to a component prop | Add a `VariableRefSelector` property and store it in `attributes.{fieldName}` |
+| Component declares its own state/value variable | Use `x-variable-schema`; runtime reads via `useComponentVariables(id)` |
+| Existing component already has `variableKey` or string IDs | Keep fallback only, mark field `deprecated: true`, and prefer `variableRef` |
+| New component or new property | Do not introduce new `variableKey`, `name`, or `nodeId::name` bindings |
+
+`x-variable-schema` defines variables owned by the component instance. It is not a replacement
+for panel property binding. Panel binding should store `VariableRef`, usually with field names
+such as `valueRef`, `titleRef`, `srcRef`, or a legacy-compatible `variableRef`.
+
 ### ⚠️ Property Storage Path (Critical)
 
 Custom properties defined in `customProperties[].fieldName` are stored in a **nested** location:
@@ -567,6 +616,8 @@ Add to `<ComponentTreeWidget>` components object:
 - [ ] 14. Right panel interaction -> Events and actions are selectable
 - [ ] 15. Interaction contract checked -> Every `supportedEvents` / `supportedActions` entry exists in `contract/registry.ts`
 - [ ] 16. Event forwarding checked -> Declared component events call injected handlers (`onChange?.`, `onInput?.`, etc.)
+- [ ] 17. Variable binding checked -> New bindable props use `VariableRefSelector` + `useVariableRef`
+- [ ] 18. Legacy binding checked -> Existing `variableKey` / string ID props are marked `deprecated` and used only as fallback
 ```
 
 ---

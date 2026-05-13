@@ -161,7 +161,7 @@ Each property maps to a UI control (setter) in the panel.
 | `label` | `string` | Display label in the panel |
 | `fieldName` | `string` | Storage key in `attributes`. **Must be unique across ALL properties (common + custom)** |
 | `type` | `string` | Setter type (see Setter Type Catalog below). **Must exist in SETTER_MAP** — unknown types silently fall back to `InputSetter` (fake-success risk). |
-| `defaultValue` | `PropertyValue` | Default value. Type is `string \| number \| boolean \| null \| string[] \| number[]`. Format must match setter type (see defaultValue Formats below). |
+| `defaultValue` | `PropertyValue` | Default value. Type is `string \| number \| boolean \| null \| string[] \| number[] \| VariableRefValue \| Record<string, unknown>`. Format must match setter type (see defaultValue Formats below). |
 | `groupKey` | `string` | Must reference a key from `customGroups` |
 | `categoryKey` | `string` | Must be one of the 6 fixed category keys |
 
@@ -185,6 +185,10 @@ Each property maps to a UI control (setter) in the panel.
 | `action` | `string` | `Button` | Action identifier when button is clicked |
 | `visibleWhen` | `VisibilityRule` | All types | Conditional visibility |
 | `linkedFields` | `LinkedFields` | All types | Value linking |
+| `allowedTypes` | `VariablePrimitiveType[]` | `VariableRefSelector` | Allowed variable types, e.g. `["string"]` for image URL/text-like binding |
+| `allowedScopes` | `VariableScope[]` | `VariableRefSelector` | Allowed variable scopes, e.g. `["global", "page", "component"]` |
+| `deprecated` | `boolean` | All types | Marks a legacy compatibility field |
+| `deprecatedMessage` | `string` | All types | Migration hint shown for deprecated fields |
 
 ### Naming Rules
 
@@ -266,6 +270,7 @@ color, fontSize, fontFamily, fontStyle, letterSpacing, lineHeight, fontWeight
 | `Font` | Font family/size/weight editor | — |
 | `Position` | X/Y position editor | — |
 | `Button` | Action trigger button | — |
+| `VariableRefSelector` | Variable binding selector that stores `VariableRef` | `allowedTypes`, `allowedScopes` |
 
 ### Layout
 
@@ -282,6 +287,45 @@ color, fontSize, fontFamily, fontStyle, letterSpacing, lineHeight, fontWeight
 | `TabItems` | Tab item list editor (with icon/badge) | — |
 
 > **Prefer existing setter types**. Only request a new custom setter if none above fits.
+
+### VariableRefSelector
+
+Use `VariableRefSelector` for new component property bindings. It stores a `VariableRef`
+object in `attributes.{fieldName}` and lets the editor choose or create variables without
+typing IDs by hand.
+
+```json
+{
+  "key": "image_srcRef",
+  "label": "图片变量",
+  "fieldName": "srcRef",
+  "type": "VariableRefSelector",
+  "defaultValue": null,
+  "groupKey": "imageBasic",
+  "categoryKey": "component",
+  "allowedTypes": ["string"],
+  "allowedScopes": ["global", "page", "component"],
+  "tooltip": "优先使用变量选择器绑定，保存 VariableRef。"
+}
+```
+
+Legacy string bindings such as `variableKey`, `activeStateVariable`, `name`, or
+`nodeId::name` must not be introduced for new properties. When maintaining existing
+components, keep them only as fallbacks and mark them:
+
+```json
+{
+  "key": "image_variableKey",
+  "label": "变量 Key（旧）",
+  "fieldName": "variableKey",
+  "type": "TextInput",
+  "defaultValue": "",
+  "groupKey": "imageBasic",
+  "categoryKey": "component",
+  "deprecated": true,
+  "deprecatedMessage": "variableKey 为旧格式，建议尽快迁移到 variableRef。"
+}
+```
 
 ### Adding a New Setter Type (Full Sync Procedure)
 
@@ -305,8 +349,8 @@ Optionally also update `PanelEditor/constants.ts` → `SETTER_CATEGORIES` for th
 
 ## defaultValue Formats (Per Setter Type)
 
-> ⚠️ **Type constraint**: `defaultValue` must be `PropertyValue` = `string | number | boolean | null | string[] | number[]`.
-> Objects and nested arrays are NOT valid PropertyValue. Complex data must be serialized as JSON string.
+> ⚠️ **Type constraint**: `defaultValue` must be `PropertyValue` = `string | number | boolean | null | string[] | number[] | VariableRefValue | Record<string, unknown>`.
+> For ordinary setters, complex data should still be serialized as JSON string unless that setter explicitly accepts an object. `VariableRefSelector` is the canonical object-valued setter.
 
 | Setter Type | Required Format | Example | Notes |
 |---|---|---|---|
@@ -336,6 +380,7 @@ Optionally also update `PanelEditor/constants.ts` → `SETTER_CATEGORIES` for th
 | `Size` | `SizePosition` value (string) | — | Passed directly as SizePosition type |
 | `TabItems` | JSON-serialized `TabItem[]` string | `"[{\"name\":\"Tab1\"}]"` | Parsed via `safeParseJson<TabItem[]>` |
 | `Button` | N/A (not stored) | `""` | |
+| `VariableRefSelector` | `null` or `VariableRefValue` object | `null` | New bindings should be created through the editor selector. Hand-written object values must include `variableId`, `variableName`, `scope`, and `varType`. |
 
 ---
 
@@ -785,6 +830,7 @@ This Skill can operate in two modes:
 2. Property `fieldName` values must match the `attributes.xxx` reads in the component source
 3. Use canonical action keys (`setNavigationBarTitle` not `setPageTitle`)
 4. If component has no custom props but has events, create a minimal config with empty `customProperties`
+5. New bindable props must use `VariableRefSelector`; legacy string bindings may remain only with `deprecated: true`
 
 ---
 
