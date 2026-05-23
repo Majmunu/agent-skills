@@ -16,6 +16,7 @@ description: 初始化并持续维护 agent-readable engineering harness：包�
 4. 优先建立最小可运行 harness，再补充深度治理。
 5. 多套规则冲突时显式记录并请求用户决定。
 6. 所有修改使用 Read → compare → patch/append 策略。重复运行不产生重复内容（幂等性）。
+7. Harness 是 AI 工程协作的控制系统：导航与计划提供前馈，门禁与可观测性提供反馈，scorecard 与自治等级调节控制强度，熵治理与 repair mode 维持稳定。该模型只解释现有机制，不新增第二套流程或目录。
 
 ## Key Policies
 
@@ -68,6 +69,8 @@ description: 初始化并持续维护 agent-readable engineering harness：包�
 | `references/subagent-workflows.md` | 子智能体工作流规范 | Step 6 |
 | `references/security-templates.md` | 安全威胁模型模板 | Step 5 |
 | `references/permission-boundaries.md` | 权限边界与审批策略 | Step 5 |
+| `references/artifact-schema.md` | 结构化 artifact schema 与 completion authority 边界 | Step 2.5/6/8 |
+| `references/trigger-health.md` | skill 触发诊断、fast path cheapness 与 re-entry 检查 | 调整触发规则或排查误触发时 |
 
 ## Execution Flow
 

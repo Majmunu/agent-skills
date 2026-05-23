@@ -43,6 +43,10 @@ Only include commands that apply to the whole repository.
 
 ## Harness Operating System
 
+Control model:
+- Harness is an AI engineering control system: AGENTS/plans/catalogs provide feedforward; checks/observability/scorecards provide feedback; autonomy/repair/entropy GC adjusts control strength.
+- Detailed execution rules live in `docs/harness/harness-engineering.md`; do not duplicate a second control rule set in project navigation files.
+
 Canonical docs:
 - Architecture Boundaries: `docs/architecture-boundaries.md`
 - CI Governance: `docs/ci-governance.md`
@@ -123,6 +127,7 @@ Generated/Updated by: harness-init
 
 ## Navigation
 
+- Control model: `<repo-root>/docs/harness/harness-engineering.md` is the single source; this project file carries local facts only.
 - Architecture Boundaries: `docs/architecture-boundaries.md`
 - Constraints: `docs/constraints.md`
 - Testing: `docs/testing.md`
@@ -199,6 +204,10 @@ Generated/Updated by: harness-init
 - Primary app paths: `src/`, `cmd/`, `apps/`, `packages/`
 
 ## Harness Operating System
+
+Control model:
+- Harness is an AI engineering control system: AGENTS/plans/catalogs provide feedforward; checks/observability/scorecards provide feedback; autonomy/repair/entropy GC adjusts control strength.
+- Detailed execution rules live in `docs/harness/harness-engineering.md`; do not duplicate a second control rule set.
 
 Canonical docs:
 - Architecture Boundaries: `docs/architecture-boundaries.md`

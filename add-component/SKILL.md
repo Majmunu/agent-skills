@@ -11,6 +11,20 @@ description: >
 > Standard flow for adding a complete component to this zero-code editor.
 > Each component requires files in **two packages**: **5 files + 4 registrations**.
 
+## Agent Quick Path
+
+Read this section first and execute it before scanning the long reference tables.
+
+1. Inspect current examples: `Button`, `SearchBar`, and the nearest similar component.
+2. Create runtime component using `style-api.ts`, `useComponentStyles`, and `withCustomWrapper`.
+3. Create panel config through `add-property-config`; do not handwave `supportedEvents` or `supportedActions`.
+4. For each event, prove the runtime payload shape and update semantic event-param options when needed.
+5. For list/table row interactions, use `loopContext`; do not read another component's private variable.
+6. For data-returning actions, update `contract/outputSchema.ts` and editor value-source tests.
+7. Run `node scripts/validate-component-config.mjs {Name}` for new configs, then lint/type-check relevant packages.
+
+Long sections below are reference material; keep the checklist near the end as the final gate.
+
 ## Architecture Overview
 
 ```
@@ -33,10 +47,10 @@ apps/editor/src/app.tsx             <- Registration 4: import + ResourceWidget +
 
 ### Two Directory Responsibilities
 
-| Directory | Role | Description |
-|---|---|---|
-| `components/{Name}/` | **Component impl** | How the component looks and runs |
-| `config/components/{Name}.json` | **Panel config** | What can be configured in the editor's right panel |
+| Directory                       | Role               | Description                                        |
+| ------------------------------- | ------------------ | -------------------------------------------------- |
+| `components/{Name}/`            | **Component impl** | How the component looks and runs                   |
+| `config/components/{Name}.json` | **Panel config**   | What can be configured in the editor's right panel |
 
 ---
 
@@ -141,43 +155,121 @@ export const {Name} = withCustomWrapper({Name}Base)
 
 ### commonScope Selection Guide
 
-| Scenario | commonScope | bindingScope | Notes |
-|---|---|---|---|
+| Scenario                                              | commonScope   | bindingScope  | Notes                                      |
+| ----------------------------------------------------- | ------------- | ------------- | ------------------------------------------ |
 | Has `style-api.ts`, component self-manages appearance | `layout-only` | `layout-only` | Avoids common + private dual-path conflict |
-| No `style-api.ts`, fully relies on common properties | `all` | `all` | Simple mode |
+| No `style-api.ts`, fully relies on common properties  | `all`         | `all`         | Simple mode                                |
 
 ### Event System
 
 `withCustomWrapper` auto-intercepts these events and dispatches to the global event bus.
 **No manual event dispatch code needed**:
 
-| Event | Strategy | Delay |
-|---|---|---|
-| `onChange`, `onInput` | Debounce | 300ms |
-| `onClick`, `onTap`, `onTouchStart` | Throttle | 500ms |
-| `onFocus`, `onBlur` | Normal | Immediate |
+| Event                                                                 | Strategy | Delay     |
+| --------------------------------------------------------------------- | -------- | --------- |
+| `onChange`, `onInput`                                                 | Debounce | 300ms     |
+| `onClick`, `onTap`                                                    | Throttle | 500ms     |
+| `onTouchStart`, `onTouchMove`, `onLongPress`                          | Throttle | 100ms     |
+| `onFocus`, `onBlur`                                                   | Normal   | Immediate |
+| `onSubmit`, `onConfirm`, `onTouchEnd`, `onPlay`, `onPause`, `onEnded` | Normal   | Immediate |
 
 > But the component must declare `supportedEvents` in `config/components/{Name}.json`
 > for it to appear in the editor's interaction panel.
+> `load` is a lifecycle contract, but it is **not** auto-fired by `withCustomWrapper`.
+> Only declare `load` after verifying a mount-time dispatch path exists for the component/runtime.
 
 ### Interaction Contract Rules
 
 Event/action options are contract-backed. Before adding any value to
-`supportedEvents` or `supportedActions`, verify it exists in:
+`supportedEvents` or `supportedActions`, verify it exists in the current
+interaction contract sources:
 
 ```
+packages/snify/src/core/interaction/contract/metadata.ts
 packages/snify/src/core/interaction/contract/registry.ts
+packages/snify/src/core/interaction/contract/outputSchema.ts
 ```
 
 Rules:
 
-| Field | Rule |
-|---|---|
-| `supportedEvents` | Use standard event keys from `EventContract.key`, e.g. `click`, `change`, `input`, `focus`, `blur`. Do not use `onClick` in JSON. |
-| `supportedActions` | Use **canonical** action keys only (e.g. `setNavigationBarTitle`, NOT legacy alias `setPageTitle`). Action must be `active + runtimeSupported + editorConfigurable`. See `add-property-config` Skill Step V9 for validation. |
-| Planned actions | Do not expose in normal component JSON. `request`, `setState`, `reLaunch`, `showToast`, `showOrHide` are planned unless a handler + contract explicitly makes them active. |
-| Component forwarding | If JSON declares an event, the component must call the injected external handler, e.g. `onChange?.(value)`, after internal state updates. |
-| New event/action | Add or update the interaction contract first, then JSON, then tests. |
+| Field                | Rule                                                                                                                                                                                                                         |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supportedEvents`    | Use standard event keys from `EventContract.key`, e.g. `click`, `change`, `input`, `focus`, `blur`. Do not use `onClick` in JSON.                                                                                            |
+| `supportedActions`   | Use **canonical** action keys only (e.g. `setNavigationBarTitle`, NOT legacy alias `setPageTitle`). Action must be `active + runtimeSupported + editorConfigurable`. See `add-property-config` Skill Step V9 for validation. |
+| Planned actions      | Do not expose in normal component JSON. Check `metadata.ts`: `status: 'planned'`, `runtimeSupported: false`, or `editorConfigurable: false` means not usable for normal configs.                                             |
+| Component forwarding | If JSON declares an event, the component must call the injected external handler, e.g. `onChange?.(value)`, after internal state updates.                                                                                    |
+| New event/action     | Add or update the interaction contract first, then runtime handler/schema, then JSON, then tests.                                                                                                                            |
+
+### Event Parameter UX Contract
+
+Editor users should choose semantic event data, not implementation paths like
+`0.detail.value`. Runtime still stores legacy `eventPath` strings for compatibility,
+so new components must make their forwarded payload match the editor's semantic
+selector.
+
+Current source of truth for the editor selector:
+
+```
+apps/editor/src/designable/designable-react-settings-form/src/widgets/InteractiveSidebar/valueSources.ts
+```
+
+Rules:
+
+| Component / Event                                           | Forwarded payload rule                                                            | User-facing option                                |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Button-like `click` / `tap`                                 | No business payload by default. Do not rely on event params.                      | Empty state: current event has no business params |
+| Input / TextArea / SearchBar `input` / `change` / `confirm` | Forward an event-like object with `detail.value` or `target.value` when possible. | `输入值`                                          |
+| Switch / Checkbox `change`                                  | Forward the checked boolean as the first argument.                                | `是否选中`                                        |
+| TabBar `change`                                             | Forward the selected value as the first argument.                                 | `选中值`                                          |
+| List / Table / Repeater row events                          | Put row data in `loopContext`, not in raw event params.                           | `当前行`, `当前行 ID`, `当前行索引`, `当前行 Key` |
+
+Loop/repeater components should dispatch row metadata as an argument shaped like:
+
+```ts
+{
+  loopContext: {
+    item,
+    index,
+    key,
+  },
+}
+```
+
+`EventManager` reads this metadata and exposes it through the `loopContext`
+value source. Do not make other components read another component's private
+component variable to discover the current row.
+
+When adding a component with new business event parameters:
+
+1. Forward a stable semantic payload from the runtime component.
+2. Add or update the semantic option in `buildEventPathOptions`.
+3. Add tests in `valueSources.test.ts`.
+4. Keep raw event-object access as compatibility/advanced behavior only.
+
+### Action Output Contract
+
+The action result picker only shows actions that have output metadata. Runtime
+stores:
+
+```ts
+{
+  sourceType: 'actionOutput',
+  actionId: 'previous-action-key',
+  outputPath: 'records'
+}
+```
+
+The editor shows it as natural choices: choose previous action, then choose
+`records`, `record`, `deletedId`, etc.
+
+Rules:
+
+| Case                                      | Required update                                                                                                                 |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| New action returns business data          | Add its fields to `packages/snify/src/core/interaction/contract/outputSchema.ts`.                                               |
+| Existing action gets new return field     | Update `outputSchema.ts`, editor labels, and tests.                                                                             |
+| Condition/scenario needs execution result | Use system fields `system.success`, `system.status`, `system.error`; ordinary `setVariable` should keep them hidden by default. |
+| New data-flow examples                    | Prefer `requestData -> action output -> setVariable page.list.records -> list/table binding`.                                   |
 
 Reference training doc:
 
@@ -309,6 +401,7 @@ events/actions, and validation rules, **read the dedicated Skill**:
 ```
 
 That Skill covers:
+
 - `ComponentConfig` schema (6 top-level fields)
 - 6 fixed category keys (DO NOT create new ones)
 - 23+ setter types with extra fields
@@ -356,32 +449,31 @@ New bindable component properties must use `VariableRef` as the canonical storag
 
 ```ts
 type VariableRef = {
-  variableId: string
-  variableName: string
-  scope: 'global' | 'page' | 'component'
-  varType: 'string' | 'number' | 'boolean' | 'array' | 'object' | 'any'
-  path?: string
-}
+  variableId: string;
+  variableName: string;
+  scope: "global" | "page" | "component";
+  varType: "string" | "number" | "boolean" | "array" | "object" | "any";
+  path?: string;
+};
 ```
 
 Runtime priority:
 
 ```ts
-const valueRef = attributes?.valueRef as VariableRef | undefined
-const [refValue] = useVariableRef(valueRef)
-const value = valueRef?.variableId && refValue !== undefined
-  ? refValue
-  : attributes?.value
+const valueRef = attributes?.valueRef as VariableRef | undefined;
+const [refValue] = useVariableRef(valueRef);
+const value =
+  valueRef?.variableId && refValue !== undefined ? refValue : attributes?.value;
 ```
 
 Rules:
 
-| Scenario | Required pattern |
-|---|---|
-| Bind an existing editor variable to a component prop | Add a `VariableRefSelector` property and store it in `attributes.{fieldName}` |
-| Component declares its own state/value variable | Use `x-variable-schema`; runtime reads via `useComponentVariables(id)` |
-| Existing component already has `variableKey` or string IDs | Keep fallback only, mark field `deprecated: true`, and prefer `variableRef` |
-| New component or new property | Do not introduce new `variableKey`, `name`, or `nodeId::name` bindings |
+| Scenario                                                   | Required pattern                                                              |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Bind an existing editor variable to a component prop       | Add a `VariableRefSelector` property and store it in `attributes.{fieldName}` |
+| Component declares its own state/value variable            | Use `x-variable-schema`; runtime reads via `useComponentVariables(id)`        |
+| Existing component already has `variableKey` or string IDs | Keep fallback only, mark field `deprecated: true`, and prefer `variableRef`   |
+| New component or new property                              | Do not introduce new `variableKey`, `name`, or `nodeId::name` bindings        |
 
 `x-variable-schema` defines variables owned by the component instance. It is not a replacement
 for panel property binding. Panel binding should store `VariableRef`, usually with field names
@@ -403,11 +495,11 @@ PropertyPanel onChange(fieldName, value)
 
 ```tsx
 // ✅ CORRECT: Read from attributes
-const shape = (attributes.shape as string) || 'square'
-const isDisabled = Boolean(attributes.disabled)
+const shape = (attributes.shape as string) || "square";
+const isDisabled = Boolean(attributes.disabled);
 
 // ❌ WRONG: Read from top-level props (these will always be undefined)
-const { shape, disabled } = props  // shape/disabled are NOT here!
+const { shape, disabled } = props; // shape/disabled are NOT here!
 ```
 
 This applies to ALL custom properties defined in config JSON. Only formily-managed
@@ -422,7 +514,7 @@ props (like `value`, `onChange`, `dataSource`) come as top-level props.
 Add one line:
 
 ```ts
-export * from './{Name}'
+export * from "./{Name}";
 ```
 
 ---
@@ -551,7 +643,7 @@ x-variable-schema: {               useComponentVariables(id)
 Add one line:
 
 ```ts
-export * from './{Name}'
+export * from "./{Name}";
 ```
 
 ---
@@ -596,6 +688,7 @@ Add to `<ComponentTreeWidget>` components object:
 
 ```markdown
 ### File Creation
+
 - [ ] 1. `packages/snify/src/components/{Name}/index.tsx` - Runtime component
 - [ ] 2. `packages/snify/src/components/{Name}/style-api.ts` - Style API (recommended, kebab-case)
 - [ ] 3. `packages/snify/src/components/{Name}/{name}.module.scss` - Styles (optional)
@@ -603,42 +696,48 @@ Add to `<ComponentTreeWidget>` components object:
 - [ ] 5. `apps/editor/src/designable/designable-components/{Name}/index.tsx` - Designer adapter
 
 ### Registration (4 places)
+
 - [ ] 6. `packages/snify/src/components/registry.ts` - Add export
 - [ ] 7. `packages/snify/src/config/components/index.ts` - Add import + mapping
 - [ ] 8. `apps/editor/src/designable/designable-components/index.ts` - Add export
 - [ ] 9. `apps/editor/src/app.tsx` - import + ResourceWidget + ComponentTreeWidget
 
 ### Verification
+
 - [ ] 10. `pnpm run lint` - No errors
 - [ ] 11. Refresh editor -> Component visible in sidebar
 - [ ] 12. Drag to canvas -> Renders correctly
 - [ ] 13. Right panel properties -> Custom properties display correctly
 - [ ] 14. Right panel interaction -> Events and actions are selectable
-- [ ] 15. Interaction contract checked -> Every `supportedEvents` / `supportedActions` entry exists in `contract/registry.ts`
+- [ ] 15. Interaction contract checked -> Every `supportedEvents` / `supportedActions` entry matches `contract/metadata.ts` and `contract/registry.ts`
 - [ ] 16. Event forwarding checked -> Declared component events call injected handlers (`onChange?.`, `onInput?.`, etc.)
-- [ ] 17. Variable binding checked -> New bindable props use `VariableRefSelector` + `useVariableRef`
-- [ ] 18. Legacy binding checked -> Existing `variableKey` / string ID props are marked `deprecated` and used only as fallback
+- [ ] 17. Event params checked -> Runtime payload has a semantic option in `valueSources.ts`, or intentionally exposes no business params
+- [ ] 18. Loop context checked -> List/Table/Repeater row actions dispatch `{ loopContext: { item, index, key } }`
+- [ ] 19. Action output checked -> Data-returning actions update `contract/outputSchema.ts` and editor value-source tests
+- [ ] 20. Config validation checked -> `node scripts/validate-component-config.mjs {Name}` passes for new configs
+- [ ] 21. Variable binding checked -> New bindable props use `VariableRefSelector` + `useVariableRef`
+- [ ] 22. Legacy binding checked -> Existing `variableKey` / string ID props are marked `deprecated` and used only as fallback
 ```
 
 ---
 
 ## Placeholder Reference
 
-| Placeholder | Example | Description |
-|---|---|---|
-| `{Name}` | `Rating` | PascalCase component name |
-| `{name}` | `rating` | lowercase component name |
-| `{Chinese Name}` | Rating Component | Display name in editor |
+| Placeholder      | Example          | Description               |
+| ---------------- | ---------------- | ------------------------- |
+| `{Name}`         | `Rating`         | PascalCase component name |
+| `{name}`         | `rating`         | lowercase component name  |
+| `{Chinese Name}` | Rating Component | Display name in editor    |
 
 ---
 
 ## Reference Examples
 
-| Component | Characteristics | Recommendation |
-|---|---|---|
-| **Button** | New architecture: `style-api.ts` + `layout-only` + no `mergeAttributs` | Primary reference |
-| Switch | Legacy: `style_api.ts` + `mergeAttributs` writeback | Structure reference only |
-| Input | Legacy: variable binding but no `x-variable-schema` | Do not follow |
+| Component  | Characteristics                                                        | Recommendation           |
+| ---------- | ---------------------------------------------------------------------- | ------------------------ |
+| **Button** | New architecture: `style-api.ts` + `layout-only` + no `mergeAttributs` | Primary reference        |
+| Switch     | Legacy: `style_api.ts` + `mergeAttributs` writeback                    | Structure reference only |
+| Input      | Legacy: variable binding but no `x-variable-schema`                    | Do not follow            |
 
 > **New components must follow Button's new architecture.**
 > Do NOT use legacy `mergeAttributs` writeback or `style_api.ts` naming.

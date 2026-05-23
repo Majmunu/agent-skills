@@ -32,6 +32,7 @@ run_check() {
   case $exit_code in
     0) passed=$((passed + 1)) ;;
     1) failed=$((failed + 1)) ;;
+    2) not_run=$((not_run + 1)) ;;
     *) warned=$((warned + 1)) ;;
   esac
   echo ""
@@ -60,6 +61,10 @@ echo "════════════════════════�
 
 if [ $failed -gt 0 ]; then
   echo "RESULT: FAIL"
+  exit 1
+elif [ "${HARNESS_STRICT_MODE:-false}" = "true" ] && [ $not_run -gt 0 ]; then
+  echo "RESULT: FAIL"
+  echo "Reason: strict mode does not allow not-run checks"
   exit 1
 else
   echo "RESULT: PASS"

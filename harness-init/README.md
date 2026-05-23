@@ -24,6 +24,9 @@ Inspired by OpenAI's [Harness Engineering](https://openai.com/index/harness-engi
 - **Subagent Workflows**: Routable review workflows with rubrics and routing rules
 - **Integrations**: GitLab, YouTrack, MCP templates (env-var only, no real tokens)
 - **Security**: Threat model, secret detection, permission boundary enforcement
+- **Artifact Schema**: Task intent, evidence bundle, drift check, and subagent context packet drafts
+- **Trigger Health**: Diagnose install/discovery/routing/depth failures without over-triggering simple tasks
+- **Retirement Track**: Require old fallback/adapter/legacy paths to be deleted, downgraded, or explicitly scheduled
 - **CI Templates**: GitHub Actions + GitLab CI with bootstrap/enforced dual-track
 - **PowerShell Fallback**: Degraded-mode scripts for Windows/no-bash environments
 - **Self-Test**: 8 fixture scenarios + golden tests + idempotency assertions
@@ -102,6 +105,7 @@ harness-init/
 4. **Actionable failures** — Every gate failure includes Reason/Evidence/Fix/Docs/Bypass.
 5. **Incremental** — Read → compare → patch/append. Never overwrite user content.
 6. **Monorepo-safe** — Root navigation stays global. Project commands stay local.
+7. **No false authority** — Harness artifacts are drafts, hints, evidence, and gate inputs; they do not replace CI or human approval.
 
 ## Scoring Dimensions
 

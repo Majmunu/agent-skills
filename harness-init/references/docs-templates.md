@@ -249,6 +249,23 @@ Any boundary exception must link:
 
 Standardize implementation-phase execution so delivery is traceable, verifiable, and auditable.
 
+## Engineering Cybernetics Model
+
+Harness is an AI engineering control system: navigation and plans provide feedforward, tests/gates/observability/context snapshots provide feedback, scorecards and autonomy levels adjust control strength, and entropy governance plus repair mode preserve long-term stability.
+
+| Control Concept | Harness Surface | Requirement |
+| --- | --- | --- |
+| Controlled object | repository, project, runtime surface | Inventory first; do not overwrite real project structure with templates |
+| Reference signal | user request, execution plan, quality threshold | Record scope and success criteria in `[REQ]` and plans |
+| Feedforward | AGENTS/CLAUDE, architecture boundaries, catalogs, rules | Read nearest navigation and Context Package before work |
+| Feedback | lint, type-check, tests, build, logs, metrics, traces, score | Record results in `[VERIFY]` / `[GATE]`; `not-run` needs a reason |
+| Controller | harness scripts, review workflow, autonomy policy | Use gate and score evidence to continue, repair, downgrade, or ask |
+| Actuator | patch, repair mode, doc backfill, CI hardening | Modify only task-scoped files and avoid parallel facts |
+| Stability | bootstrap/enforced, approval boundary, rollback | Keep risky scopes conservative until evidence supports promotion |
+| Entropy control | feedback-loops, entropy-gc, context snapshot | Harden repeated failures into test/constraint/ADR/check |
+
+This model explains the existing harness. It must not create a second workflow, new canonical paths, or duplicated project-level rules.
+
 ## Required Outputs
 
 Each implementation must include:

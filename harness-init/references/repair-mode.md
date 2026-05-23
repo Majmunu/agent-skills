@@ -65,6 +65,44 @@ Repair mode should:
 
 ---
 
+## Repair + Retirement Track
+
+修复不仅要回答“新逻辑怎么补”，还要回答“旧逻辑怎么退役”。
+
+以下变更默认必须进入 Retirement Track：
+
+- 新增 fallback
+- 新增 adapter
+- 新增 legacy path
+- 新增 compatibility branch
+- 新增第二个 owner 或 source-of-truth
+- 用新脚本替代旧脚本
+- 用新文档路径替代旧文档路径
+
+Retirement Track 必须记录：
+
+- `Retained Object`: 暂时保留的旧逻辑/旧文件/旧入口
+- `Retention Reason`: 为什么不能本轮删除
+- `Observation Metrics`: 如何判断它还在被使用
+- `Retirement Timing`: 何时删除或降级为 wrapper/alias
+
+默认策略：
+
+1. 能安全删除就删除。
+2. 不能删除就降级为 alias/wrapper。
+3. 仍不能降级时，必须记录保留理由和退役时间。
+4. 新增路径不得不交代旧路径处置。
+
+Pre-delivery review 必须检查：
+
+- root cause 是否真的被修复
+- duplicate owner 是否减少
+- obsolete fallback 是否删除或排期
+- legacy path 是否只剩 alias/wrapper
+- 退役计划是否写入 execution plan 或 `docs/entropy-gc.md`
+
+---
+
 ## Pollution Suggestion Format
 
 ```text

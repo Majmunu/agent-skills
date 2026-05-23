@@ -196,6 +196,8 @@ jobs:
 - constraints without checks
 - checks without docs
 - feedback entries without hardening
+- retained fallbacks/adapters without retirement timing
+- duplicate owners without canonical owner decision
 - entropy-gc not updated
 - CI governance exceptions past expiry
 

@@ -48,7 +48,7 @@ if [ ! -f "$INTEGRATIONS_FILE" ]; then
   echo "Fix: Run harness-init to generate .harness/integrations.yml"
   echo "Docs: references/permission-boundaries.md"
   echo "Bypass: not allowed"
-  exit 0
+  exit 2
 fi
 echo "pass: integrations.yml exists"
 

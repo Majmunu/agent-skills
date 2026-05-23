@@ -3,11 +3,15 @@
 > Harness Init Contract Version: v3
 > Generated/Updated by: harness-init
 
-This directory contains template versions of all harness scripts that will be deployed to target projects during `harness-init`.
+This directory documents the script deployment contract. The canonical source
+scripts currently live in the skill package at `scripts/harness/`; target
+projects receive copied or adapted versions under their own
+`scripts/harness/` directory.
 
 ## Scripts
 
-These scripts are copied to the target project's `scripts/harness/` directory during initialization.
+These scripts are copied from the skill package to the target project's
+`scripts/harness/` directory during initialization.
 
 ### Core Gates
 - `check-all.sh` — Aggregate all checks
@@ -28,7 +32,6 @@ These scripts are copied to the target project's `scripts/harness/` directory du
 - `worktree-create.sh` — Create isolated git worktree
 - `worktree-run.sh` — Execute command in worktree
 - `worktree-clean.sh` — Clean worktree safely
-- `worktree-status.sh` — Show worktree status
 
 ### UI Verification
 - `capture-dom.sh` — DOM snapshot capture
@@ -45,4 +48,8 @@ These scripts are copied to the target project's `scripts/harness/` directory du
 
 ## Deployment
 
-During `harness-init`, these templates are copied to the target project. Existing scripts are NOT overwritten — only missing scripts are added (idempotent).
+During `harness-init`, source scripts are copied to the target project. Existing
+scripts are NOT overwritten — only missing scripts are added. If a target
+project already has legacy script paths referenced by CI or docs,
+`harness-init` must generate wrappers that call the canonical
+`scripts/harness/*` scripts and preserve exit codes.

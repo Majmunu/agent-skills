@@ -12,19 +12,42 @@
 - `check-all.sh`
 - `check-critical.sh`
 - `check-placeholders.sh`
-- `check-boundaries.sh`
 - `check-plan-required.sh`
+- `check-alias-integrity.sh`
+- `check-wrapper-integrity.sh`
+- `check-secrets.sh`
+- `check-permissions.sh`
+- `score-quality.sh`
+- `query-logs.sh`
+- `query-metrics.sh`
+- `query-traces.sh`
+- `update-context-snapshot.sh`
+- `doc-gardening.sh`
+
+运行面与 UI 验证脚本：
+- `worktree-create.sh`
+- `worktree-run.sh`
+- `worktree-clean.sh`
+- `capture-dom.sh`
+- `capture-screenshot.sh`
+- `check-console.sh`
+- `verify-user-journey.sh`
+
+集成脚本：
+- `sync-issues.sh`
+- `link-plan-to-issue.sh`
+- `fetch-review-context.sh`
+- `create-merge-request.sh`
+
+可选兼容脚本（若目标项目已有对应 CI/文档引用则必须生成 wrapper 或 adapter）：
+- `check-boundaries.sh`
 - `check-file-size.sh`
 - `check-naming.sh`
 - `check-logging.sh`
-- `check-alias-integrity.sh`
-- `check-wrapper-integrity.sh`
 - `reproduce.sh`
 - `validate.sh`
 - `regression.sh`
 - `pre-release.sh`
-- `query-logs.sh`
-- `query-metrics.sh`
 - `doc-gardening.sh`
 
 legacy 根脚本仅允许 wrapper。
@@ -125,16 +148,17 @@ legacy 文档必须是 alias 模板，不得包含治理正文。出现以下情
 ## Minimal Gate Aggregator
 
 `scripts/harness/check-all.sh` 应串行汇总 gate 结果并输出 PASS/FAIL 汇总，至少包含：
-- structure acceptance
 - plan gate acceptance
-- CI track config acceptance
 - compatibility acceptance
-- idempotency acceptance
+- secrets acceptance
+- permission acceptance
+- quality score readiness
 
 要求：
 - 读取 `HARNESS_TRACK=bootstrap|enforced`（默认可取 `enforced`）
 - 支持读取 `.harness/gate-severity.yml` 决定 bootstrap/enforced 下的 blocking gates
 - `HARNESS_STRICT_MODE=false` 仅可放宽非 blocking 的 `exit 2`
+- 子脚本返回 `2` 时必须计入 `not-run`，不得计入 `warn` 或 `pass`
 - blocking gate 在两轨都必须失败即阻断；security/auth/data-migration 在命中对应范围/label 时必须按 blocking 处理
 
 ---
