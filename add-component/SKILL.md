@@ -113,10 +113,14 @@ export const {Name}Component = observer(({ children, ...props }: typeProps) => {
   // ===== 5. Component Variable System =====
   // Component-owned variables: values declared by x-variable-schema and scoped to this node.
   const componentVars = useComponentVariables(id || '')
-  // Priority: component variable > props static value
+  // Priority: component variable override > attributes static/default value
   // WARNING: variable name must match the 'name' field in x-variable-schema exactly
-  // const isLoading = componentVars.loading !== undefined
-  //   ? Boolean(componentVars.loading) : props.loading
+  // `undefined` means "not overridden"; do not compare against display defaults like "按钮".
+  // const hasVariableOverride = (key: string) =>
+  //   Object.prototype.hasOwnProperty.call(componentVars, key) &&
+  //   componentVars[key] !== undefined
+  // const isLoading = hasVariableOverride('loading')
+  //   ? Boolean(componentVars.loading) : Boolean(finalAttributes.loading)
 
   // Property bindings selected from the right panel should use VariableRef.
   // Example priority: variableRef > deprecated variableKey fallback > static value.
@@ -472,12 +476,32 @@ Rules:
 | ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Bind an existing editor variable to a component prop       | Add a `VariableRefSelector` property and store it in `attributes.{fieldName}` |
 | Component declares its own state/value variable            | Use `x-variable-schema`; runtime reads via `useComponentVariables(id)`        |
+| Component exposes a business object such as metric/notice  | Prefer one `object` variable with `shape.fields`, not many flat variables     |
 | Existing component already has `variableKey` or string IDs | Keep fallback only, mark field `deprecated: true`, and prefer `variableRef`   |
 | New component or new property                              | Do not introduce new `variableKey`, `name`, or `nodeId::name` bindings        |
 
 `x-variable-schema` defines variables owned by the component instance. It is not a replacement
 for panel property binding. Panel binding should store `VariableRef`, usually with field names
 such as `valueRef`, `titleRef`, `srcRef`, or a legacy-compatible `variableRef`.
+
+### Component Variables vs Property Panel
+
+Treat the property panel and component variables as two different layers:
+
+| Layer              | Purpose                                                        | Runtime role                                  |
+| ------------------ | -------------------------------------------------------------- | --------------------------------------------- |
+| Property attributes | Static/default configuration written to `attributes[fieldName]` | Fallback when no runtime override exists      |
+| Component variables | Runtime state owned by this node and writable by actions       | Override when the variable value is not `undefined` |
+
+Rules:
+
+- `x-variable-schema.defaultValue` should normally be `undefined`. Use a concrete default only when the variable truly has an initial runtime state that should override the panel immediately.
+- Runtime override detection must use "own key + value !== undefined". Do not use display defaults such as `"按钮"` as sentinels, because actions may intentionally write that exact value.
+- For simple controls (`Button.value`, `Input.value`, `SearchBar.value`, `Switch.value`), flat variables are acceptable because the state is a single primary value.
+- For business display components (`MetricCard`, `NoticeItem`, record-like cards), prefer one object variable such as `metric` or `notice` with `shape.fields`. This keeps action selectors readable and avoids many ambiguous `value/title/status` variables.
+- Object field `label` / `displayName` is editor UX only. Runtime addressing still uses the technical path, e.g. `metric.value` or `notice.primaryActionText`.
+- Runtime priority for object components should be: object variable field > legacy flat variable compatibility > field mapping data > fixed attributes/defaults.
+- If a property can be overridden by component variables, make that clear in the property panel label/help text where the existing config system supports it.
 
 ### ⚠️ Property Storage Path (Critical)
 
@@ -602,15 +626,15 @@ export const {Name}: DnFC<React.ComponentProps<typeof Component>> = (
             scope: 'component',
             name: 'value',           // <- runtime reads componentVars.value
             varType: 'string',
-            defaultValue: 'default',
-            desc: 'Component value',
+            defaultValue: undefined,
+            desc: 'Runtime component value; undefined keeps property panel config effective',
           },
           disabled: {
             scope: 'component',
             name: 'disabled',        // <- runtime reads componentVars.disabled
             varType: 'boolean',
-            defaultValue: false,
-            desc: 'Disabled state',
+            defaultValue: undefined,
+            desc: 'Runtime disabled override; undefined keeps property panel config effective',
           },
         },
       },
@@ -629,8 +653,29 @@ x-variable-schema: {               useComponentVariables(id)
   value: {                               |
     name: 'value',   --- addNode -->  VariableStore.register()
     varType: 'string',                    |
-    defaultValue: '...'              componentVars.value  <- same name
+    defaultValue: undefined          componentVars.value  <- same name
   }
+}
+```
+
+Business object variable example:
+
+```tsx
+'x-variable-schema': {
+  metric: {
+    scope: 'component',
+    name: 'metric',
+    varType: 'object',
+    defaultValue: undefined,
+    desc: 'Metric card runtime data',
+    shape: {
+      fields: {
+        title: { varType: 'string', label: '指标标题' },
+        value: { varType: 'string', label: '指标数值' },
+        status: { varType: 'string', label: '指标状态' },
+      },
+    },
+  },
 }
 ```
 
